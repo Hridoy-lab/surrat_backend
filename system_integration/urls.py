@@ -30,6 +30,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls'), name='accounts'),
+    path('bot/', include('bot.urls'),),
     # path('api/subscriptions/', include('subscriptions.urls'), name='subscriptions'),
 
     # path('google/', include('allauth.urls'), name='google'),
