@@ -1,4 +1,5 @@
 import requests
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -17,7 +18,7 @@ from django.contrib.auth import login
 from accounts.tokens import account_activation_token
 from .models import CustomUser
 from .serializers import CustomUserSerializer, LogoutSerializer, ResendActivationEmailSerializer, \
-    PasswordResetSerializer, PasswordChangeSerializer, AuthSerializer
+    PasswordResetSerializer, PasswordChangeSerializer, AuthSerializer, VerifyOTPSerializer, ResendOTPSerializer
 
 User = get_user_model()
 
@@ -26,6 +27,26 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
     permission_classes = (AllowAny,)
+
+
+class VerifyOTPView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = VerifyOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'status': 'OTP verified'}, status=status.HTTP_200_OK)
+
+
+class ResendOTPView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = ResendOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'status': 'New OTP sent'}, status=status.HTTP_200_OK)
 
 
 class ActivateView(APIView):
