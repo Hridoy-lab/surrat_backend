@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import RegisterView, CustomTokenObtainPairView, LogoutView, UserDetail, UserList, LogoutAllView, VerifyMe, \
     ActivateView, ResendActivationEmailView, PasswordResetView, PasswordResetConfirmView, sign_in, sign_out, \
-    auth_receiver, VerifyOTPView, ResendOTPView
+    auth_receiver, VerifyOTPView, ResendOTPView, GoogleAuthAPI
 
 app_name = 'accounts'
 
@@ -26,7 +26,7 @@ urlpatterns = [
     # path('api/google', GoogleLoginApi.as_view(), name='google_login'),
     # path('api/google', GoogleLoginApi.as_view(), name='google_login'),
     # path('google-login/', google_login, name='google_login_page'),
-    path('google/login/callback/', sign_in, name='sign_in'),
+    path('api/google/', GoogleAuthAPI.as_view(), name="google_authenticaiton"),
     path('sign-out', sign_out, name='sign_out'),
     path('auth-receiver', auth_receiver, name='auth_receiver'),
 ]

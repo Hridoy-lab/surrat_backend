@@ -18,7 +18,8 @@ from django.contrib.auth import login
 from accounts.tokens import account_activation_token
 from .models import CustomUser
 from .serializers import CustomUserSerializer, LogoutSerializer, ResendActivationEmailSerializer, \
-    PasswordResetSerializer, PasswordChangeSerializer, AuthSerializer, VerifyOTPSerializer, ResendOTPSerializer
+    PasswordResetSerializer, PasswordChangeSerializer, AuthSerializer, VerifyOTPSerializer, ResendOTPSerializer, \
+    GoogleLoginSerializer
 
 User = get_user_model()
 
@@ -171,6 +172,43 @@ class PasswordResetConfirmView(APIView):
 
 
 # ================================================Social Authentication================================================
+# Function to get Google user info
+def get_google_user_info(access_token):
+    print("Hello")
+    import requests
+    response = requests.get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    print("This is response:", response)
+    return response.json()
+class GoogleAuthAPI(APIView):
+    serializer_class = GoogleLoginSerializer
+    permission_classes = (AllowAny,)
+    def post(self, request):
+        print("Hello")
+        access_token = request.data.get("access_token")
+        print(access_token)
+        user_info = get_google_user_info(access_token)
+        print("User info:", user_info)
+        email = user_info.get("email")
+        if not user_info or not user_info.get("email"):
+            return {"Error" : "Authentication failed"}
+
+        # Get or create the user
+        user, created = User.objects.get_or_create(email=email)
+        if created or not user.is_email_verified:
+            user.is_email_verified = True
+            user.save()
+        # Create JWT token
+        # Generate JWT token
+        refresh = RefreshToken.for_user(user)
+        token = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+
+        return Response({"user": user.id, "token": token}, status=status.HTTP_200_OK)
 
 # class GoogleLoginApi(APIView):
 #     def get(self, request, *args, **kwargs):

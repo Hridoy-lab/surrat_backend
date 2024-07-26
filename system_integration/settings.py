@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ['*']
 LOCAL_APPS = [
     'accounts',
     'bot',
+    'users',
 
 ]
 
@@ -156,6 +157,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
     'ROTATE_REFRESH_TOKENS': True,

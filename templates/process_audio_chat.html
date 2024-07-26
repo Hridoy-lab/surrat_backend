@@ -125,6 +125,18 @@
         <h1>Northern Sámi 🚀 AI</h1>
     </div>
 
+<!--    <div class="section">-->
+<!--        <h2>Transcribe Audio</h2>-->
+<!--        <h4>Audio Recorder</h4>-->
+<!--        <div class="alignment_rec">-->
+<!--            <button id="startBtn" class="toggle_button">Start Recording</button>-->
+<!--            <button id="stopBtn" class="toggle_button hidden">Stop Recording</button>-->
+<!--            <audio id="audioPlayback" controls></audio>-->
+<!--            <div id="recordingEffect" class="hidden recording">Recording...</div>-->
+<!--        </div>-->
+<!--        <input type="file" id="audioFile" accept="audio/*">-->
+<!--        <button onclick="uploadAudio()">Submit Audio</button>-->
+<!--    </div>-->
     <div class="section">
         <h2>Transcribe Audio</h2>
         <h4>Audio Recorder</h4>
@@ -134,11 +146,11 @@
             <audio id="audioPlayback" controls></audio>
             <div id="recordingEffect" class="hidden recording">Recording...</div>
         </div>
-        <input type="file" id="audioFile" accept="audio/*">
-        <h4>Image Upload</h4>
-        <input type="file" id="imageFileInput" accept="image/*">
-        <textarea rows="3" cols="1" placeholder="ChatGPT prompt Text" id="chatgpt-prompt"></textarea>
-        <button onclick="uploadAudio()">Submit Audio</button>
+        <form method="post" enctype="multipart/form-data" action="{% url 'process_audio' %}">
+            {% csrf_token %}
+            <input type="file" id="audioFile" name="file" accept="audio/*">
+            <button type="submit">Submit Audio</button>
+        </form>
     </div>
 
     <div class="section">
@@ -159,181 +171,40 @@
     let mediaRecorder;
     let recordedChunks = [];
 
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const audioFileInput = document.getElementById('audioFile');
-    const recordingEffect = document.getElementById('recordingEffect');
-    const imageFileInput = document.getElementById('imageFile');
-    const audioPlayback = document.getElementById('audioPlayback');
-    const transcribedTextElem = document.getElementById('transcribedText');
 
-    const translatedTextElem = document.getElementById('translatedText');
-    const chatResponseElem = document.getElementById('chatResponse');
-    const translatedChatResponseElem = document.getElementById('translatedChatResponse');
-
-    startBtn.addEventListener('click', () => {
-        navigator.permissions.query({name: 'microphone'}).then(permissionStatus => {
-            if (permissionStatus.state === 'granted') {
-                startRecording();
-            } else if (permissionStatus.state === 'prompt') {
-                requestMicrophonePermission();
-            } else {
-                alert('Microphone access is denied. Please enable it in your browser settings.');
-            }
-        }).catch(error => {
-            console.error('Permission error:', error);
-            alert('Permission error. Please check your browser settings.');
-        });
-    });
-
-    stopBtn.addEventListener('click', () => {
-        mediaRecorder.stop();
-        startBtn.classList.remove('hidden');
-        stopBtn.classList.add('hidden');
-        recordingEffect.classList.add('hidden');
-        audioFileInput.disabled = true;  // Enable file upload
-    });
-
-    audioFileInput.addEventListener('change', () => {
-        if (audioFileInput.files.length > 0) {
-            startBtn.disabled = true;  // Disable recording buttons
-            stopBtn.disabled = true;
-        } else {
-            startBtn.disabled = false;
-            stopBtn.disabled = false;
-        }
-    });
-    function updateButtonStyles() {
-        if (startBtn.disabled) {
-            startBtn.style.backgroundColor = '#aaa';
-            startBtn.style.cursor = 'not-allowed';
-        } else {
-            startBtn.style.backgroundColor = '#4a77d4';
-            startBtn.style.cursor = 'pointer';
-        }
-        if (stopBtn.disabled) {
-            stopBtn.style.backgroundColor = '#aaa';
-            stopBtn.style.cursor = 'not-allowed';
-        } else {
-            stopBtn.style.backgroundColor = '#4a77d4';
-            stopBtn.style.cursor = 'pointer';
-        }
-    }
-
-    function requestMicrophonePermission() {
-        navigator.mediaDevices.getUserMedia({audio: true})
-            .then(stream => {
-                stream.getTracks().forEach(track => track.stop());  // Close the stream immediately
-                startRecording();
-            })
-            .catch(error => {
-                console.error('Error accessing microphone:', error);
-                alert('Error accessing microphone.');
-            });
-    }
-
-    function startRecording() {
-        navigator.mediaDevices.getUserMedia({audio: true})
+    document.getElementById('startBtn').addEventListener('click', () => {
+        navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 mediaRecorder = new MediaRecorder(stream);
-                recordedChunks = [];  // Reset recordedChunks for a new recording session
                 mediaRecorder.ondataavailable = event => {
                     if (event.data.size > 0) {
                         recordedChunks.push(event.data);
-                        console.log('Data available:', event.data);
                     }
                 };
                 mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(recordedChunks, {type: 'audio/wav'});
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    audioPlayback.src = audioUrl;
-                    audioPlayback.hidden = false;
-                    console.log('Recording stopped, audio URL:', audioUrl);
+                    const audioBlob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    document.getElementById('audioPlayback').src = URL.createObjectURL(audioBlob);
+                    const fileInput = document.getElementById('audioFile');
+                    const file = new File([audioBlob], "recorded_audio.webm", { type: 'audio/webm' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
                 };
                 mediaRecorder.start();
-                startBtn.classList.add('hidden');
-                stopBtn.classList.remove('hidden');
-                recordingEffect.classList.remove('hidden');
-                audioFileInput.disabled = true;  // Disable file upload
-                console.log('Recording started');
-            })
-            .catch(error => {
-                console.error('Error accessing microphone:', error);
-                alert('Error accessing microphone.');
+                document.getElementById('startBtn').classList.add('hidden');
+                document.getElementById('stopBtn').classList.remove('hidden');
+                document.getElementById('recordingEffect').classList.remove('hidden');
             });
-    }
+    });
 
-    function uploadAudio() {
-        const formData = new FormData();
-        const imageFileInput = document.getElementById('imageFileInput');
-        const prompt = document.getElementById('chatgpt-prompt').value;
-        const loader = document.getElementById('loader');
-        loader.classList.remove('hidden');
+    document.getElementById('stopBtn').addEventListener('click', () => {
+        mediaRecorder.stop();
+        document.getElementById('startBtn').classList.remove('hidden');
+        document.getElementById('stopBtn').classList.add('hidden');
+        document.getElementById('recordingEffect').classList.add('hidden');
+    });
 
-        if (audioFileInput.files.length > 0) {
-            formData.append('file', audioFileInput.files[0]);
-        } else if (recordedChunks.length > 0) {
-            const audioBlob = new Blob(recordedChunks, {type: 'audio/wav'});
-            formData.append('file', audioBlob, 'recorded_audio.wav');
-            console.log('Recorded audio file appended:', audioBlob);
-        } else if (imageFileInput.files.length > 0) { // Check if an image file is selected
-        formData.append('file', imageFileInput.files[0]);
-        } else {
-                alert('Please select or record an audio file first.');
-                loader.classList.add('hidden');
-                return;
-        }
 
-        formData.append('lang', 'sme');
-        console.log('prompt', prompt, typeof(prompt))
-        if (prompt.trim() !== "") {
-        console.log('prompt', prompt, typeof(prompt))
-        formData.append('prompt', prompt);
-    }
-        fetch("{% url 'process_audio_chat' %}", {
-            method: 'POST',
-            body: formData
-        }).then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                pollForAudio(data);
-
-            }).catch(error => {
-                console.error('Error:', error);
-                alert('Failed to process audio.');
-                loader.classList.add('hidden');
-            });
-    }
-
-    function pollForAudio(data) {
-        const audioUrl = `/audio/${data.filename}`;
-        const audioPlayer = document.getElementById('audioPlayer');
-
-        const intervalId = setInterval(() => {
-            fetch(audioUrl, {method: 'HEAD'})
-                .then(response => {
-                    if (response.ok) {
-                        clearInterval(intervalId);
-                        // Update UI with processed response
-                        transcribedTextElem.textContent = data.transcribed_text || '';
-
-                        translatedTextElem.textContent = data.translated_text || '';
-                        chatResponseElem.textContent = data.chat_response || '';
-                        translatedChatResponseElem.textContent = data.translated_chat_response || '';
-                        audioPlayer.src = audioUrl;
-                        audioPlayer.hidden = false;
-                        audioPlayer.play();
-                        document.getElementById('loader').classList.add('hidden');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking audio file:', error);
-                    document.getElementById('loader').classList.add('hidden');
-                });
-        }, 8000);  // Check every 8 seconds
-    }
 </script>
 </body>
 </html>
