@@ -30,13 +30,21 @@ class AIService:
         return transcription.get('text', 'Transcription failed or "text" key is missing')
 
     def perform_translation(self, text, src_lang, tgt_lang):
-        payload = {
+        print("This is text: ", text)
+        payload = json.dumps({
             "text": text,
             "src": src_lang,
-            "tgt": tgt_lang
+            "tgt": tgt_lang,
+            "domain": "general",
+            "application": "Documentation UI"
+        })
+        headers = {
+            'accept': 'application/json',
+            'Content-Type': 'application/json'
         }
-        response = requests.post(self.translation_url, headers={'Content-Type': 'application/json'}, json=payload)
+        response = requests.request("POST", url=self.translation_url, headers=headers, data=payload)
 
+        print(response.text)
         if response.status_code == 200:
             data = response.json()
             return {"Translated Text": data.get('result', 'No translation found.')}
