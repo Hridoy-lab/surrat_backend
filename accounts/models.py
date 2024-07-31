@@ -16,6 +16,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     otp = models.CharField(max_length=6, blank=True, null=True)
     otp_expiration = models.DateTimeField(blank=True, null=True)
+    otp_resend_attempts = models.PositiveIntegerField(default=0)
+    otp_resend_last_attempt = models.DateTimeField(blank=True, null=True)
+    otp_resend_cooldown_period = models.DurationField(default=timezone.timedelta(hours=2))
 
     objects = CustomUserManager()
 

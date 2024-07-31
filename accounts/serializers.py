@@ -116,11 +116,27 @@ class ResendOTPSerializer(serializers.Serializer):
         user = get_object_or_404(CustomUser, email=value)
         if user.is_email_verified:
             raise serializers.ValidationError('Email is already verified.')
+        now = timezone.now()
+        if user.otp_resend_attempts >= 3:
+            if user.otp_resend_last_attempt:
+                cooldown_end = user.otp_resend_last_attempt + user.otp_resend_cooldown_period
+                if now < cooldown_end:
+                    raise serializers.ValidationError('Too many requests. Try again later.')
+
         return value
 
     def save(self):
         email = self.validated_data['email']
         user = get_object_or_404(User, email=email)
+        now = timezone.now()
+        if user.otp_resend_attempts >= 3 and user.otp_resend_last_attempt:
+            cooldown_end = user.otp_resend_last_attempt + user.otp_resend_cooldown_period
+            if now < cooldown_end:
+                raise serializers.ValidationError('Too many requests. Try again later.')
+
+        # Reset OTP and resend it
+        user.otp_resend_attempts += 1
+        user.otp_resend_last_attempt = now
         otp = set_otp(user)
         date = timezone.now().strftime('%d %b, %Y')
         mail_subject = 'Your New OTP Code'

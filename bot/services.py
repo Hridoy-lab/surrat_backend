@@ -17,7 +17,8 @@ load_dotenv()
 class AIService:
     def __init__(self):
         self.open_api_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-        self.api_url = "https://api-inference.huggingface.co/models/NbAiLab/whisper-large-sme"
+        # self.api_url = "https://api-inference.huggingface.co/models/NbAiLab/whisper-large-sme"
+        self.api_url = "https://api-inference.huggingface.co/models/openai/whisper-tiny"
         self.headers = {
             "Authorization": f"Bearer {os.environ['HUGGINGFACE_API_KEY']}",
             "language": "en"
@@ -30,7 +31,6 @@ class AIService:
         return transcription.get('text', 'Transcription failed or "text" key is missing')
 
     def perform_translation(self, text, src_lang, tgt_lang):
-        print("This is text: ", text)
         payload = json.dumps({
             "text": text,
             "src": src_lang,
@@ -43,8 +43,6 @@ class AIService:
             'Content-Type': 'application/json'
         }
         response = requests.request("POST", url=self.translation_url, headers=headers, data=payload)
-
-        print(response.text)
         if response.status_code == 200:
             data = response.json()
             return {"Translated Text": data.get('result', 'No translation found.')}
@@ -58,9 +56,35 @@ class AIService:
         except LangDetectException as e:
             return f"Error detecting language: {str(e)}"
 
-    def chat_with_openai(self, transcribed_text):
-        if transcribed_text:
-            system_content = transcribed_text
+    # def chat_with_openai(self, transcribed_text):
+    #     if transcribed_text:
+    #         system_content = transcribed_text
+    #         model = "gpt-4-turbo-preview"
+    #     else:
+    #         system_content = "You are a very friendly AI assistant."
+    #         model = "gpt-3.5-turbo"
+    #
+    #     messages = [
+    #         {"role": "system", "content": system_content},
+    #         {"role": "user", "content": transcribed_text}
+    #     ]
+    #
+    #     response = self.open_api_client.chat.completions.create(
+    #         model=model,
+    #         messages=messages,
+    #         max_tokens=256,
+    #         temperature=1,
+    #         top_p=1,
+    #         frequency_penalty=0,
+    #         presence_penalty=0
+    #     )
+    #
+    #     return response.choices[0].message.content.strip() if response.choices else "No response generated"
+
+
+    def chat_with_openai(self, transcribed_text, chatgpt_prompt="Give me answer in 3 words. Never generate answer more than 3 words."):
+        if chatgpt_prompt:
+            system_content = chatgpt_prompt
             model = "gpt-4-turbo-preview"
         else:
             system_content = "You are a very friendly AI assistant."
@@ -80,7 +104,6 @@ class AIService:
             frequency_penalty=0,
             presence_penalty=0
         )
-
         return response.choices[0].message.content.strip() if response.choices else "No response generated"
 
     def tts(self, chatgpt_response, filename):
@@ -202,7 +225,8 @@ class AIService:
                     }
                 logger.info(f"Transcribed text: {transcribed_text}")
 
-                translation_result = self.perform_translation(transcribed_text, 'sme', 'en')
+                # translation_result = self.perform_translation(transcribed_text, 'sme', 'en')
+                translation_result = self.perform_translation(transcribed_text, 'en', 'en')
                 print(translation_result)
                 translated_text = translation_result.get("Translated Text", transcribed_text)
                 logger.info(f"Translated text: {translated_text}")
@@ -212,6 +236,7 @@ class AIService:
                 print(chat_response)
 
                 translation_result = self.perform_translation(chat_response, 'en', 'sme')
+                # translation_result = self.perform_translation(chat_response, 'en', 'en')
                 print(translation_result)
                 translated_chat_response = translation_result.get("Translated Text", chat_response)
                 logger.info(f"Translated chat response: {translated_chat_response}")
