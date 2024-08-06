@@ -9,7 +9,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls'), name='accounts'),
     path('bot/', include('bot.urls'), ),
     path('users/', include('users.urls')),
-    # path('api/subscriptions/', include('subscriptions.urls'), name='subscriptions'),
+    path('api/subscriptions/', include('subscriptions.urls'), name='subscriptions'),
 
 ]
 

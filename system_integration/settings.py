@@ -29,13 +29,15 @@ SECRET_KEY = 'django-insecure-9094&ejm-g)p%u&6_ebyj+1==*)bs%0lc8y*xk8!%ya9eg!jd3
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
+TIME_ZONE = 'Asia/Dhaka'
+USE_TZ = True
 # Application definition
 
 LOCAL_APPS = [
     'accounts',
     'bot',
     'users',
+    'subscriptions'
 
 ]
 
@@ -124,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -150,6 +152,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
+        # 'subscriptions.permissions.HasActiveSubscription',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
