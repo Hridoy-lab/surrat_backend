@@ -7,7 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
-from .serializers import AudioFileSerializer
+from bot.serializers import AudioFileSerializer, TranslationSerializer
+from bot.services.translate import Translator
 
 # Create your views here.
 logger = logging.getLogger(__name__)
@@ -42,3 +43,22 @@ class ProcessAudio(APIView):
             else:
                 return Response({"error": "Unsupported file format"}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class Translate(APIView):
+    serializer_class = TranslationSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            text = serializer.validated_data['text']
+            source_language = serializer.validated_data['source_language']
+            target_language = serializer.validated_data['target_language']
+            translation_object = Translator()
+            response = translation_object.perform_translation(
+                text=text,
+                src_lang=source_language,
+                tgt_lang=target_language
+            )
+            return Response(response, status=status.HTTP_200_OK)
+        

@@ -1,10 +1,12 @@
 import json
 import requests
 
+TRANSLATION_URL = "https://api.tartunlp.ai/translation/v2"
+
 
 class Translator:
     def __init__(self):
-        self.translation_url = "https://api.tartunlp.ai/translation/v2"
+        self.translation_url = TRANSLATION_URL
 
     def perform_translation(self, text, src_lang, tgt_lang):
         payload = json.dumps({
