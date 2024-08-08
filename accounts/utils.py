@@ -1,6 +1,7 @@
 import random
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
 
 
 def generate_otp():
@@ -10,6 +11,7 @@ def generate_otp():
 def set_otp(user):
     otp = generate_otp()
     user.otp = otp
-    user.otp_expiration = timezone.now() + timedelta(minutes=10)  # OTP expires in 10 minutes
+    opt_expiration_time = int(getattr(settings, 'OTP_EXPIRATION_TIME', 5))
+    user.otp_expiration = timezone.now() + timedelta(minutes=opt_expiration_time)
     user.save()
     return otp

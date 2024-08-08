@@ -85,13 +85,13 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Docker
-**/Dockerfile
-**/docker-compose.yml
+!**/Dockerfile
+!**/docker-compose.yml
 **/docker-compose.override.yml
 .dockerignore
 docker-compose.prod.yml
 docker-compose.dev.yml
-docker-compose.yml
+!docker-compose.yml
 .docker/
 docker-compose.override.yml
 

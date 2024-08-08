@@ -28,6 +28,7 @@ class RegisterView(generics.CreateAPIView):
 
 class VerifyOTPView(APIView):
     permission_classes = (AllowAny,)
+    serializer_class = VerifyOTPSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = VerifyOTPSerializer(data=request.data)
@@ -38,6 +39,7 @@ class VerifyOTPView(APIView):
 
 class ResendOTPView(APIView):
     permission_classes = (AllowAny,)
+    serializer_class = ResendOTPSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = ResendOTPSerializer(data=request.data)

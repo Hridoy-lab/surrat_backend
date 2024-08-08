@@ -1,0 +1,48 @@
+services:
+
+  postgres:
+    container_name: postgres_surrat
+    image: postgres:13  # Specifying a version is a good practice
+    restart: always
+    env_file: .env
+    environment:
+      - POSTGRES_DB=${DATABASE_NAME}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_PORT=${DATABASE_PORT}
+#    ports:
+#      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - surrat
+
+  surrat:
+    container_name: surrat_backend
+    build:
+      context: .
+    restart: always
+    env_file: .env
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=1
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_NAME=${DATABASE_NAME:-app_db}
+      - DATABASE_USER=${DATABASE_USER:-app_db_user}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-supersecretpassword}
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - postgres
+    networks:
+      - surrat
+
+volumes:
+  postgres-data:
+
+networks:
+  surrat:
+    external: true

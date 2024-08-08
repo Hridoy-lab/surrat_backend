@@ -1,6 +1,7 @@
 from email._header_value_parser import get_token
 
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django.utils import timezone
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
@@ -60,7 +61,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(**validated_data)
 
-        if settings.ACCOUNT_EMAIL_VERIFICATION == 'mandatory':
+        is_email_verification_mandatory = getattr(settings, 'ACCOUNT_EMAIL_VERIFICATION', 'optional')
+
+        if is_email_verification_mandatory == "mandatory":
             user.is_active = False
             otp = set_otp(user)
             current_site = get_current_site(self.context['request'])
@@ -113,15 +116,21 @@ class ResendOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
     def validate_email(self, value):
-        user = get_object_or_404(CustomUser, email=value)
-        if user.is_email_verified:
-            raise serializers.ValidationError('Email is already verified.')
-        now = timezone.now()
-        if user.otp_resend_attempts >= 3:
-            if user.otp_resend_last_attempt:
-                cooldown_end = user.otp_resend_last_attempt + user.otp_resend_cooldown_period
-                if now < cooldown_end:
-                    raise serializers.ValidationError('Too many requests. Try again later.')
+        try:
+            user = User.objects.get(email=value)
+            if user:
+                if user.is_email_verified:
+                    raise serializers.ValidationError('Email is already verified.')
+                now = timezone.now()
+                if user.otp_resend_attempts >= 3:
+                    if user.otp_resend_last_attempt:
+                        cooldown_end = user.otp_resend_last_attempt + user.otp_resend_cooldown_period
+                        if now < cooldown_end:
+                            raise serializers.ValidationError('Too many requests. Try again later.')
+        except User.DoesNotExist:
+            raise Http404(
+                f"No user found matching the given email. Email: {value}"
+            )
 
         return value
 
@@ -230,6 +239,6 @@ class AuthSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)
     error = serializers.CharField(required=False)
 
+
 class GoogleLoginSerializer(serializers.Serializer):
     access_token = serializers.CharField(required=True)
-
