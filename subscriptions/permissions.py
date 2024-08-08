@@ -1,17 +1,14 @@
 from rest_framework.permissions import BasePermission
-from .models import UserSubscription
-from django.utils import timezone
+from rest_framework.exceptions import PermissionDenied
 
 
 class HasActiveSubscription(BasePermission):
     def has_permission(self, request, view):
-        user = request.user
-        if not user.is_authenticated:
-            return False
-        try:
-            user_subscription = UserSubscription.objects.get(user=user)
-            if user_subscription:
-                return user_subscription.is_active
-        except UserSubscription.DoesNotExist:
-            return False
-        return False
+        user_subscription = getattr(request.user, "usersubscription", None)
+
+        if user_subscription and user_subscription.is_active:
+            return True
+
+        raise PermissionDenied(
+            "Your subscription has expired. Please renew to continue accessing this service."
+        )

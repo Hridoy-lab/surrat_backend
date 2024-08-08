@@ -7,7 +7,7 @@ from accounts.managers import CustomUserManager
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=255, unique=True, blank=True, null=True)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, blank=False, null=False)
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -18,11 +18,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     otp_expiration = models.DateTimeField(blank=True, null=True)
     otp_resend_attempts = models.PositiveIntegerField(default=0)
     otp_resend_last_attempt = models.DateTimeField(blank=True, null=True)
-    otp_resend_cooldown_period = models.DurationField(default=timezone.timedelta(hours=2))
+    otp_resend_cooldown_period = models.DurationField(
+        default=timezone.timedelta(hours=2)
+    )
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     def __str__(self):

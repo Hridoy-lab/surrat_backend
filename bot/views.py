@@ -1,6 +1,8 @@
 import time
 import logging
 from django.http import JsonResponse
+from rest_framework.permissions import IsAuthenticated
+
 from users.models import ChatHistory
 from .services.ai_services import AIService
 from rest_framework.views import APIView
@@ -12,6 +14,7 @@ from bot.serializers import (
     TranslationSerializer,
     TranscriptSerializer,
 )
+from subscriptions.permissions import HasActiveSubscription
 from bot.services.translate import Translator
 from .services.transcribe import Transcriber
 
@@ -22,6 +25,7 @@ ai_service = AIService()
 
 class ProcessAudio(APIView):
     parser_classes = (MultiPartParser, FormParser)
+    serializer_class = AudioFileSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = AudioFileSerializer(data=request.data)
@@ -55,6 +59,10 @@ class ProcessAudio(APIView):
 
 class Translate(APIView):
     serializer_class = TranslationSerializer
+    permission_classes = [
+        IsAuthenticated,
+        HasActiveSubscription,
+    ]
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
