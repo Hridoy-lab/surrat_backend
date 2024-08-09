@@ -96,7 +96,7 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         fields = ["id", "user", "subscription", "start_date", "end_date", "is_active"]
         read_only_fields = ["user", "start_date", "end_date", "is_active"]
 
-    def get_is_active(self, obj):
+    def get_is_active(self, obj) -> bool:
         return obj.is_active
 
     def create(self, validated_data):

@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 
 from users.models import ChatHistory
-from .services.ai_services import AIService
+from .services.ai_services import AIService, ProcessData
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -13,6 +13,7 @@ from bot.serializers import (
     AudioFileSerializer,
     TranslationSerializer,
     TranscriptSerializer,
+    AudioRequestSerializer,
 )
 from subscriptions.permissions import HasActiveSubscription
 from bot.services.translate import Translator
@@ -74,7 +75,7 @@ class Translate(APIView):
             response = translation_object.perform_translation(
                 text=text, src_lang=source_language, tgt_lang=target_language
             )
-            return Response(response, status=status.HTTP_200_OK)
+            return Response({"response": response}, status=status.HTTP_200_OK)
 
 
 class Transcript(APIView):
@@ -96,3 +97,45 @@ class Transcript(APIView):
             )
 
         return JsonResponse({"data": response}, status=status.HTTP_200_OK)
+
+
+class AudioRequestView(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    serializer_class = AudioRequestSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = AudioRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            # Save the initial request with the authenticated user
+            audio_request = serializer.save(user=request.user)
+
+            # Process the audio and related data
+            process_data = ProcessData(user=request.user)
+            processed_data = process_data.process_audio(
+                {
+                    "audio_file": audio_request.audio,
+                    "instruction": audio_request.instruction,
+                }
+            )
+
+            # Check for errors in the processing steps
+            if "error" in processed_data:
+                return Response(
+                    {"error": processed_data["error"]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Update the model with the results
+            audio_request.transcribed_text = processed_data["transcribed_text"]
+            audio_request.translated_text = processed_data["translated_text"]
+            audio_request.gpt_response = processed_data["gpt_response"]
+            audio_request.translated_response = processed_data["translated_response"]
+            audio_request.save()
+
+            return Response(
+                AudioRequestSerializer(audio_request).data,
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

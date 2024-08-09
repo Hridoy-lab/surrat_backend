@@ -24,6 +24,11 @@ class Transcriber:
         response = requests.post(self.api_url, headers=self.headers, data=audio_data)
         response.raise_for_status()  # Raise an error for bad HTTP responses
         transcription = response.json()
-        return transcription.get(
-            "text", 'Transcription failed or "text" key is missing'
-        )
+        print(f"From the transcription class: {transcription}")
+
+        if "text" not in transcription:
+            raise ValueError(
+                'Transcription failed: "text" key is missing in the response'
+            )
+
+        return transcription["text"]

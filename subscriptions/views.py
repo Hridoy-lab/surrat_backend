@@ -168,7 +168,7 @@ class UserSubscriptionView(APIView):
 
 class RenewSubscriptionView(APIView):
     permission_classes = [IsAuthenticated]
-    # serializer_class = UserSubscriptionSerializer
+    serializer_class = None
 
     def post(self, request):
         user_subscription = UserSubscription.objects.filter(user=request.user).first()
@@ -192,6 +192,7 @@ class RenewSubscriptionView(APIView):
 
 class CancelSubscriptionView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = None
 
     def post(self, request):
         user_subscription = UserSubscription.objects.filter(user=request.user).first()

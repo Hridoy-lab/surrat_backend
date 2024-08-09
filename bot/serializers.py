@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 import mimetypes
+from bot.models import AudioRequest
 
 
 class AudioFileSerializer(serializers.Serializer):
@@ -29,3 +30,26 @@ class TranslationSerializer(serializers.Serializer):
 
 class TranscriptSerializer(serializers.Serializer):
     file = serializers.FileField()
+
+
+class AudioRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AudioRequest
+        fields = "__all__"
+        read_only_fields = [
+            "user",
+            "transcribed_text",
+            "translated_text",
+            "gpt_response",
+            "translated_response",
+            "created_at",
+        ]
+
+    def validate_audio(self, value):
+        # Check the MIME type of the uploaded file
+        mime_type, _ = mimetypes.guess_type(value.name)
+        if not mime_type or not mime_type.startswith("audio"):
+            raise serializers.ValidationError(
+                "The uploaded file is not a valid audio file."
+            )
+        return value
