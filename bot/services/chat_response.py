@@ -14,7 +14,7 @@ class ChatBot:
     def chat_with_openai(
         self,
         translated_text,
-        instruction="Give me answer in 3 words. Never generate answer "
+        instruction="Act you are very helpfully instructor for language learner, who give suggestion how can improve and what he/she done wording. Give me answer in 3 words. Never generate answer "
         "more than 3 words.",
     ):
         if instruction:
