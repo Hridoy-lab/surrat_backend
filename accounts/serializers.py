@@ -226,6 +226,24 @@ class PasswordResetSerializer(serializers.Serializer):
             send_mail(mail_subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
 
 
+class AccessTokenSerializer(serializers.Serializer):
+    access_token = serializers.CharField(write_only=True)
+
+class UpdateUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'profile_picture']  # Only allow updating these fields
+
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        # Handle profile picture update
+        profile_picture = validated_data.get('profile_picture', None)
+        if profile_picture:
+            instance.profile_picture = profile_picture
+        instance.save()
+        return instance
+
 class LogoutSerializer(serializers.Serializer):
     pass
 

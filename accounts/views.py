@@ -1,3 +1,5 @@
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 import requests
 from django.utils import timezone
 from rest_framework import generics, status
@@ -9,13 +11,13 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.shortcuts import get_object_or_404
 from accounts.tokens import account_activation_token
 from .models import CustomUser
 from .serializers import CustomUserSerializer, LogoutSerializer, ResendActivationEmailSerializer, \
     PasswordResetSerializer, PasswordChangeSerializer, AuthSerializer, VerifyOTPSerializer, ResendOTPSerializer, \
-    GoogleLoginSerializer
+    GoogleLoginSerializer, AccessTokenSerializer, UpdateUserSerializer
 
 User = get_user_model()
 
@@ -54,6 +56,53 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         token = super().get_token(user)
         token['email'] = user.email
         return token
+
+
+class UserInfoFromTokenAPI(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = AccessTokenSerializer
+
+    def post(self, request):
+        # Initialize the serializer with the request data
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Extract the access token from the validated data
+        access_token = serializer.validated_data['access_token']
+
+        try:
+            # Decode the token and retrieve the user
+            token = AccessToken(access_token)
+            user_id = token['user_id']
+            user = User.objects.get(id=user_id)
+
+            # Prepare the user data to return
+            user_data = {
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+            }
+
+            return Response(user_data, status=status.HTTP_200_OK)
+
+        except (TokenError, InvalidToken, User.DoesNotExist):
+            return Response({"error": "Invalid token or user not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateUserInfoAPI(APIView):
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsAuthenticated]
+    serializer_class = UpdateUserSerializer  # Reference the serializer class here
+
+    def patch(self, request):
+        user = request.user
+        serializer = self.serializer_class(user, data=request.data,
+                                           partial=True)  # Instantiate the serializer with data
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(generics.GenericAPIView):
