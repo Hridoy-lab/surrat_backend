@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 
 from users.models import ChatHistory
+from .models import instruction_per_page
 from .services.ai_services import AIService, ProcessData
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -109,15 +110,20 @@ class AudioRequestView(APIView):
         if serializer.is_valid():
             # Save the initial request with the authenticated user
             audio_request = serializer.save(user=request.user)
+            print(audio_request.page_number)
+            instruction = instruction_per_page.objects.get(page_number=audio_request.page_number)
+            audio_request.instruction = instruction.instruction_text
+            print(instruction.instruction_text)
 
             # Process the audio and related data
             process_data = ProcessData(user=request.user)
             processed_data = process_data.process_audio(
                 {
                     "audio_file": audio_request.audio,
-                    "instruction": audio_request.instruction,
+                    "instruction": instruction.instruction_text,
                 }
             )
+            print("This is process data: ", processed_data)
 
             # Check for errors in the processing steps
             if "error" in processed_data:

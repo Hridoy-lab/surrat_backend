@@ -94,7 +94,6 @@ class GPTResponseHandler:
         return {
             "role": "system",
             "content": "You are a helpful assistant. Please assist the user with their queries. "
-            "Give the response very short not more than 3 words.",
         }
 
     def create_prompt(self, current_text, instruction):
