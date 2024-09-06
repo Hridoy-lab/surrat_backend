@@ -11,6 +11,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=255, blank=True, null=True)
     last_name = models.CharField(max_length=255, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    hints = models.BooleanField(default=False, blank=True, null=True)
+    transcribed = models.BooleanField(default=False, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_email_verified = models.BooleanField(default=False)
