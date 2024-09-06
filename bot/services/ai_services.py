@@ -86,7 +86,7 @@ class ProcessData:
         try:
             # Translate text to English
             translated_text = self.translator.perform_translation(
-                text=transcribed_text, src_lang="sme", tgt_lang="en"
+                text=transcribed_text, src_lang="sme", tgt_lang="nor"
             )
             print(f"Translated text: {translated_text}")
 
@@ -107,7 +107,7 @@ class ProcessData:
         try:
             # Translate GPT response to SME
             translated_response = self.translator.perform_translation(
-                text=gpt_response, src_lang="en", tgt_lang="sme"
+                text=gpt_response, src_lang="nor", tgt_lang="sme"
             )
             print(f"Translated GPT Response: {translated_response}")
 
