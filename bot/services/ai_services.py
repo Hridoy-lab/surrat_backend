@@ -117,6 +117,6 @@ class ProcessData:
         return {
             "transcribed_text": transcribed_text,
             "translated_text": translated_text,
-            "gpt_response": gpt_response,
-            "translated_response": translated_response,
+            "gpt_response": gpt_response.strip('\"'),
+            "translated_response": translated_response.strip('\"'),
         }

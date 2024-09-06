@@ -1,8 +1,9 @@
+import base64
 import time
 import logging
 from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
-
+import os
 from users.models import ChatHistory
 from .models import instruction_per_page
 from .services.ai_services import AIService, ProcessData
@@ -98,15 +99,48 @@ class Transcript(APIView):
             )
 
         return JsonResponse({"data": response}, status=status.HTTP_200_OK)
-
-
+import requests
+# # def encode_image(image_path):
+# def encode_image(image_file):
+#
+#     return base64.b64encode(image_file.read()).decode('utf-8')
+#     # with open(image_path, "rb") as image_file:
+#     #     return base64.b64encode(image_file.read()).decode('utf-8')
+# def send_image_to_gpt(base64_image, text):
+#     headers = {
+#         "Content-Type": "application/json",
+#         "Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"
+#     }
+#     payload = {
+#         "model": "gpt-4o-mini",
+#         "messages": [
+#             {
+#                 "role": "user",
+#                 "content": [
+#                     {
+#                         "type": "text",
+#                         "text": f"{text}"
+#                     },
+#                     {
+#                         "type": "image_url",
+#                         "image_url": {
+#                             "url": f"data:image/jpeg;base64,{base64_image}"
+#                         }
+#                     }
+#                 ]
+#             }
+#         ],
+#         "max_tokens": 300
+#     }
+#     response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+#     return response.json()
 class AudioRequestView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
     serializer_class = AudioRequestSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = AudioRequestSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             # Save the initial request with the authenticated user
             audio_request = serializer.save(user=request.user)
@@ -145,3 +179,69 @@ class AudioRequestView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# class AudioRequestView(APIView):
+#     parser_classes = (MultiPartParser, FormParser)
+#     permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+#     serializer_class = AudioRequestSerializer
+#
+#     def post(self, request, *args, **kwargs):
+#         serializer = AudioRequestSerializer(data=request.data)
+#         if serializer.is_valid():
+#             # Save the initial request with the authenticated user
+#             audio_request = serializer.save(user=request.user)
+#             print(audio_request.page_number)
+#
+#             try:
+#                 instruction = instruction_per_page.objects.get(page_number=audio_request.page_number)
+#             except instruction_per_page.DoesNotExist:
+#                 return Response(
+#                     {"error": "Instruction not found for the given page number"},
+#                     status=status.HTTP_404_NOT_FOUND,
+#                 )
+#
+#             instruction_text = instruction.instruction_text
+#             instruction_image = instruction.instruction_image
+#
+#             # Prepare the image for GPT if it exists
+#             if instruction_image:
+#                 base64_image = encode_image(instruction.instruction_image)
+#                 gpt_response = send_image_to_gpt(base64_image, instruction_text)
+#                 instruction_text += f"\nGPT Response: {gpt_response.get('choices', [{}])[0].get('message', {}).get('content', '')}"
+#                 print("GPT Response:", instruction_text)
+#
+#             # Process the audio and related data
+#             process_data = ProcessData(user=request.user)
+#             processed_data = process_data.process_audio(
+#                 {
+#                     "audio_file": audio_request.audio,
+#                     "instruction": instruction_text,
+#                 }
+#             )
+#             print("This is process data: ", processed_data)
+#
+#             # Check for errors in the processing steps
+#             if "error" in processed_data:
+#                 return Response(
+#                     {"error": processed_data["error"]},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+#
+#             # Update the model with the results
+#             audio_request.transcribed_text = processed_data.get("transcribed_text", "")
+#             audio_request.translated_text = processed_data.get("translated_text", "")
+#             audio_request.gpt_response = processed_data.get("gpt_response", "")
+#             audio_request.translated_response = processed_data.get("translated_response", "")
+#             audio_request.save()
+#
+#             return Response(
+#                 # AudioRequestSerializer(audio_request).data,
+#                 {
+#                     "transcribed_text": audio_request.transcribed_text,
+#                     "translated_text": audio_request.translated_text,
+#                     "gpt_response": audio_request.gpt_response,
+#                     "translated_response": audio_request.translated_response,
+#                 },
+#                 status=status.HTTP_201_CREATED,
+#             )
+#
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

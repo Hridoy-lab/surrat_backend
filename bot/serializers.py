@@ -35,11 +35,12 @@ class TranscriptSerializer(serializers.Serializer):
 class AudioRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = AudioRequest
-        fields = ['page_number', 'audio']
+        fields = "__all__"
         read_only_fields = [
             "user",
             "transcribed_text",
             "translated_text",
+            "instruction",
             "gpt_response",
             "translated_response",
             "created_at",

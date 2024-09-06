@@ -23,7 +23,7 @@ class AudioRequest(models.Model):
 class instruction_per_page(models.Model):
     page_number = models.PositiveIntegerField(unique=True, null=True, blank=True)
     instruction_text = models.TextField(null=True, blank=True)
-    # instruction_image = models.ImageField(upload_to='instructions/', null=True, blank=True)
+    instruction_image = models.ImageField(upload_to='instructions/', null=True, blank=True)
 
     def __str__(self):
         return f"Page {self.page_number}"
