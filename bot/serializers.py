@@ -42,6 +42,7 @@ class AudioRequestSerializer(serializers.ModelSerializer):
             "translated_text",
             "instruction",
             "gpt_response",
+            "instruction",
             "translated_response",
             "created_at",
         ]
