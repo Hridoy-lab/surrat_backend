@@ -237,12 +237,30 @@ class UpdateUserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
+
         # Handle profile picture update
         profile_picture = validated_data.get('profile_picture', None)
         if profile_picture:
             instance.profile_picture = profile_picture
+
+        # Update 'hints' and 'transcribed'
+        instance.hints = validated_data.get('hints', instance.hints)
+        instance.transcribed = validated_data.get('transcribed', instance.transcribed)
+
         instance.save()
         return instance
+        # instance.first_name = validated_data.get('first_name', instance.first_name)
+        # instance.last_name = validated_data.get('last_name', instance.last_name)
+        # # Handle profile picture update
+        # profile_picture = validated_data.get('profile_picture', None)
+        # if profile_picture:
+        #     instance.profile_picture = profile_picture
+        #
+        # # Update 'hints' and 'transcribed'
+        # instance.hints = validated_data.get('hints', instance.hints)
+        # instance.transcribed = validated_data.get('transcribed', instance.transcribed)
+        # instance.save()
+        # return instance
 
 class LogoutSerializer(serializers.Serializer):
     pass

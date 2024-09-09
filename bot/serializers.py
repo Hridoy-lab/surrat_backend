@@ -45,6 +45,7 @@ class AudioRequestSerializer(serializers.ModelSerializer):
             "instruction",
             "translated_response",
             "created_at",
+            "response_audio"
         ]
 
     def validate_audio(self, value):

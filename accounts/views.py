@@ -59,34 +59,47 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 class UserInfoFromTokenAPI(APIView):
-    permission_classes = [AllowAny]
-    serializer_class = AccessTokenSerializer
+    permission_classes = [IsAuthenticated]
+    # serializer_class = AccessTokenSerializer
+    def get(self, request):
+        # If authenticated, get the user from the request
+        user = request.user
+        user_data = {
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "hint": user.hints,
+            "transcribe_text": user.transcribed,
+            "dp": user.profile_picture.url if user.profile_picture else None,
+        }
+        return Response(user_data, status=status.HTTP_200_OK)
 
-    def post(self, request):
-        # Initialize the serializer with the request data
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
-        # Extract the access token from the validated data
-        access_token = serializer.validated_data['access_token']
-
-        try:
-            # Decode the token and retrieve the user
-            token = AccessToken(access_token)
-            user_id = token['user_id']
-            user = User.objects.get(id=user_id)
-
-            # Prepare the user data to return
-            user_data = {
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-            }
-
-            return Response(user_data, status=status.HTTP_200_OK)
-
-        except (TokenError, InvalidToken, User.DoesNotExist):
-            return Response({"error": "Invalid token or user not found."}, status=status.HTTP_400_BAD_REQUEST)
+    # def post(self, request):
+    #     # Initialize the serializer with the request data
+    #     serializer = self.serializer_class(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #
+    #     # Extract the access token from the validated data
+    #     access_token = serializer.validated_data['access_token']
+    #
+    #     try:
+    #         # Decode the token and retrieve the user
+    #         token = AccessToken(access_token)
+    #         user_id = token['user_id']
+    #         user = User.objects.get(id=user_id)
+    #
+    #         # Prepare the user data to return
+    #         user_data = {
+    #             "first_name": user.first_name,
+    #             "last_name": user.last_name,
+    #             "email": user.email,
+    #         }
+    #
+    #         return Response(user_data, status=status.HTTP_200_OK)
+    #
+    #     except (TokenError, InvalidToken, User.DoesNotExist):
+    #         return Response({"error": "Invalid token or user not found."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UpdateUserInfoAPI(APIView):
@@ -208,6 +221,8 @@ class GoogleAuthAPI(APIView):
         # Get or create the user
         user, created = User.objects.get_or_create(email=email)
         if created or not user.is_email_verified:
+            user.first_name = user_info.get("name")
+            user.profile_picture = user_info.get("picture")
             user.is_email_verified = True
             user.save()
         # Create JWT token

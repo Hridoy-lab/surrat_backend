@@ -1,4 +1,7 @@
 import logging
+import time
+from .TTS import tts
+# from .TTS import TTSGenerator
 from .transcribe import Transcriber
 from .translate import Translator
 from bot.services.chat_response import GPTResponseHandler, ChatBot
@@ -62,6 +65,7 @@ class AIService:
             logger.error(f"Error processing file: {str(e)}")
             return {"error": str(e)}
 
+# tts("olla bures", 'output.mp3')
 
 class ProcessData:
     def __init__(self, user):
@@ -69,6 +73,7 @@ class ProcessData:
         self.transcriber = Transcriber()
         self.translator = Translator()
         self.gpt_handler = GPTResponseHandler(self.user)
+        # self.tts = TTSGenerator()
 
     def process_audio(self, data):
         try:
@@ -114,9 +119,21 @@ class ProcessData:
         except Exception as e:
             return {"error": f"Error during response translation: {str(e)}"}
 
+        timestamp = time.strftime("%Y%m%d_%H%M%S")  # Format timestamp for readability
+        filename = f"Generated_Audio_nor_to_sami_{timestamp}.mp3"
+
+        try:
+            # tts = self.tts.tts(translated_text, filename)
+            from .TTS import tts
+            tts(translated_text, filename)
+
+        except Exception as e:
+            return {"error": f"Error during TTS generation: {str(e)}"}
+
         return {
             "transcribed_text": transcribed_text,
             "translated_text": translated_text,
             "gpt_response": gpt_response.strip('\"'),
             "translated_response": translated_response.strip('\"'),
+            'filename': filename
         }

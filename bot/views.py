@@ -138,6 +138,7 @@ class AudioRequestView(APIView):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
     serializer_class = AudioRequestSerializer
+    print("ase")
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -171,6 +172,7 @@ class AudioRequestView(APIView):
             audio_request.translated_text = processed_data["translated_text"]
             audio_request.gpt_response = processed_data["gpt_response"]
             audio_request.translated_response = processed_data["translated_response"]
+            audio_request.response_audio = processed_data["filename"]
             audio_request.save()
 
             return Response(
