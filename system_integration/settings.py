@@ -24,12 +24,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.environ.get("SECRET_KEY", "your-default-secret-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 TIME_ZONE = "Asia/Dhaka"
 USE_TZ = True
 
 # Application definition
 INSTALLED_APPS = [
+    "channels",
+    'daphne',
     # Local apps
     "accounts",
     "bot",
@@ -47,16 +50,24 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
+    "corsheaders"
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+CORS_ALLOWED_ORIGINS = [
+    "http://10.0.0.44",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    "http://0.0.0.0:8081",
 ]
 
 ROOT_URLCONF = "system_integration.urls"
@@ -77,8 +88,14 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "system_integration.wsgi.application"
+# WSGI_APPLICATION = "system_integration.wsgi.application"
+ASGI_APPLICATION = "system_integration.asgi.application"
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',  # For development. For production, use Redis.
 
+    },
+}
 # Database configuration
 DATABASES = {
     "default": {

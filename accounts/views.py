@@ -65,6 +65,7 @@ class UserInfoFromTokenAPI(APIView):
         # If authenticated, get the user from the request
         user = request.user
         user_data = {
+            "id": user.id,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,

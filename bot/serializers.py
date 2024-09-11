@@ -56,3 +56,13 @@ class AudioRequestSerializer(serializers.ModelSerializer):
                 "The uploaded file is not a valid audio file."
             )
         return value
+
+
+class UsersAllAudioRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AudioRequest
+        fields = '__all__'
+
+# class AudioRequestQuerySerializer(serializers.Serializer):
+#     page_number = serializers.IntegerField()
+#     user = serializers.EmailField()

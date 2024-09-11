@@ -119,21 +119,26 @@ class ProcessData:
         except Exception as e:
             return {"error": f"Error during response translation: {str(e)}"}
 
-        timestamp = time.strftime("%Y%m%d_%H%M%S")  # Format timestamp for readability
-        filename = f"Generated_Audio_nor_to_sami_{timestamp}.mp3"
+        # timestamp = time.strftime("%Y%m%d_%H%M%S")  # Format timestamp for readability
+        # filename = f"Generated_Audio_nor_to_sami_{timestamp}.mp3"
 
-        try:
-            # tts = self.tts.tts(translated_text, filename)
-            from .TTS import tts
-            tts(translated_text, filename)
-
-        except Exception as e:
-            return {"error": f"Error during TTS generation: {str(e)}"}
+        # try:
+        #     # tts = self.tts.tts(translated_text, filename)
+        #     from .TTS import tts
+        #     tts(translated_response, filename)
+        #
+        # except Exception as e:
+        #     return {"error": f"Error during TTS generation: {str(e)}"}
+        #
+        # print(f"transcribed_text:  {transcribed_text} , \n"
+        #       f"translated_text: {translated_text}, \n"
+        #       f"gpt_response: {gpt_response}, "
+        #       f"translated_response:  {translated_response}, filename: {filename}")
 
         return {
             "transcribed_text": transcribed_text,
             "translated_text": translated_text,
             "gpt_response": gpt_response.strip('\"'),
             "translated_response": translated_response.strip('\"'),
-            'filename': filename
+            # 'filename': filename
         }
