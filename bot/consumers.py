@@ -233,6 +233,22 @@ class MySyncConsumer(SyncConsumer):
                                 }})
                             })
 
+                            complete_response = {
+                                "type": "complete",
+                                "data": {
+                                    "id": audio_request.id,
+                                    "transcribed_text": audio_request.transcribed_text,
+                                    "translated_text": audio_request.translated_text,
+                                    "gpt_response": audio_request.gpt_response,
+                                    "translated_response": audio_request.translated_response,
+                                    "user_audio": self.get_full_url(
+                                        audio_request.audio.url) if audio_request.audio else None,
+                                    "response_audio": self.get_full_url(audio_request.response_audio.url)  # Initially no response audio
+                                }
+                            }
+
+                            print("Final response:", json.dumps(complete_response, indent=4))
+
                     # Start a new thread to delay and send the second response
                     threading.Thread(target=send_response_audio).start()
 
