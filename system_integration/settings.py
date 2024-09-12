@@ -35,9 +35,6 @@ INSTALLED_APPS = [
     'daphne',
     # Local apps
     "accounts",
-    "bot",
-    "users",
-    "subscriptions",
     # Django apps
     "django.contrib.admin",
     "django.contrib.auth",
@@ -50,7 +47,10 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
-    "corsheaders"
+    "corsheaders",
+    "bot",
+    "users",
+    "subscriptions",
 ]
 
 MIDDLEWARE = [
@@ -65,7 +65,6 @@ MIDDLEWARE = [
 ]
 CORS_ALLOWED_ORIGINS = [
     "http://10.0.0.44",
-    "http://16.171.226.102/",
     "http://16.171.226.102",
     "http://localhost:8081",
     "http://127.0.0.1:8081",

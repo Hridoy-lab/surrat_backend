@@ -6,15 +6,15 @@ import base64
 # from html.parser import incomplete
 
 from django.core.files.base import ContentFile
+from django.contrib.auth import get_user_model
 
-from users.models import User
 from .models import AudioRequest, instruction_per_page
 # from channels.generic.websocket import SyncConsumer
 from channels.consumer import SyncConsumer, AsyncConsumer
 
 from .services.TTS import tts
 from .services.ai_services import ProcessData
-
+User = get_user_model()
 
 class MySyncConsumer(SyncConsumer):
 
