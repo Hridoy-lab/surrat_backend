@@ -243,15 +243,15 @@ class AudioRequestView(APIView):
 
 class AudioRequestListView(generics.ListAPIView):
     # parser_classes = (MultiPartParser, FormParser)
-    # permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+    permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
     serializer_class = UsersAllAudioRequestSerializer
 
     def get_queryset(self):
         email = self.request.query_params.get('email')
         page_number = self.request.query_params.get('page_number')
 
-        if not email or not page_number:
-            raise ValidationError("Both 'email' and 'page_number' query parameters are required.")
+        # if not email or not page_number:
+        #     raise ValidationError("Both 'email' and 'page_number' query parameters are required.")
 
         queryset = AudioRequest.objects.filter(user__email=email, page_number=page_number)
         queryset = queryset.order_by('-created_at')

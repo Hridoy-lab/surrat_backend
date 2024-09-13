@@ -56,12 +56,34 @@ class AudioRequestSerializer(serializers.ModelSerializer):
                 "The uploaded file is not a valid audio file."
             )
         return value
-
+from pydub import AudioSegment
 
 class UsersAllAudioRequestSerializer(serializers.ModelSerializer):
+    # class Meta:
+    #     model = AudioRequest
+    #     fields = '__all__'
+    audio_duration = serializers.SerializerMethodField()
+    response_audio_duration = serializers.SerializerMethodField()
+
     class Meta:
         model = AudioRequest
-        fields = '__all__'
+        fields = ['user', 'page_number', 'audio', 'audio_duration', 'response_audio', 'response_audio_duration',
+                  'instruction', 'transcribed_text', 'translated_text', 'gpt_response', 'translated_response',
+                  'created_at']
+
+    def get_audio_duration(self, obj):
+        if obj.audio:
+            audio_file_path = obj.audio.path
+            audio = AudioSegment.from_file(audio_file_path)
+            return len(audio) / 1000.0  # duration in seconds
+        return None
+
+    def get_response_audio_duration(self, obj):
+        if obj.response_audio:
+            response_audio_file_path = obj.response_audio.path
+            response_audio = AudioSegment.from_file(response_audio_file_path)
+            return len(response_audio) / 1000.0  # duration in seconds
+        return None
 
 # class AudioRequestQuerySerializer(serializers.Serializer):
 #     page_number = serializers.IntegerField()

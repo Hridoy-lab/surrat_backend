@@ -5,15 +5,21 @@ import json
 import base64
 # from html.parser import incomplete
 
+import logging
+from time import process_time
+from pydub import AudioSegment
 from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
-
 from .models import AudioRequest, instruction_per_page
 # from channels.generic.websocket import SyncConsumer
 from channels.consumer import SyncConsumer, AsyncConsumer
 
 from .services.TTS import tts
 from .services.ai_services import ProcessData
+
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 User = get_user_model()
 
 class MySyncConsumer(SyncConsumer):
@@ -24,89 +30,171 @@ class MySyncConsumer(SyncConsumer):
             'type': 'websocket.accept',
         })
 
-    def websocket_receive(self, event):
-        print("WebSocket received...", event)
-        # try:
-        #     if 'text' in event:
-        #         data = json.loads(event['text'])
-        #         page_number = data.get('page_number')
-        #         user_email = data.get('email')
-        #         audio_file_data = data.get('audio_file')
-        #
-        #         if isinstance(audio_file_data, str):
-        #             audio_bytes = base64.b64decode(audio_file_data)
-        #             file_name = f"sound_from_user{time.time()}.mp3"
-        #             audio_file_path = f'static/audio/{file_name}'
-        #
-        #             os.makedirs('static/audio', exist_ok=True)
-        #             with open(audio_file_path, 'wb') as audio_file:
-        #                 audio_file.write(audio_bytes)
-        #
-        #             instruction = instruction_per_page.objects.get(page_number=page_number)
-        #
-        #             process_data = ProcessData(user=data.get('id'))
-        #             processed_data = process_data.process_audio({
-        #                 "audio_file": open(audio_file_path, 'rb'),
-        #                 "instruction": instruction.instruction_text,
-        #             })
-        #
-        #             if "error" in processed_data:
-        #                 self.send({
-        #                     'type': 'websocket.send',
-        #                     'text': json.dumps({"error": processed_data["error"]})
-        #                 })
-        #                 return
-        #
-        #             processed_audio_filename = processed_data["filename"]
-        #             audio_file_full_path = f'static/audio/{processed_audio_filename}'
-        #
-        #             if os.path.exists(audio_file_full_path):
-        #                 user = User.objects.get(email=user_email)
-        #                 audio_request = AudioRequest(
-        #                     user=user,
-        #                     page_number=page_number,
-        #                     instruction=instruction.instruction_text,
-        #                     transcribed_text=processed_data["transcribed_text"],
-        #                     translated_text=processed_data["translated_text"],
-        #                     gpt_response=processed_data["gpt_response"],
-        #                     translated_response=processed_data["translated_response"],
-        #                 )
-        #                 audio_request.audio.save(file_name, ContentFile(audio_bytes))
-        #                 with open(audio_file_full_path, 'rb') as response_audio_file:
-        #                     audio_request.response_audio.save(processed_audio_filename,
-        #                                                       ContentFile(response_audio_file.read()))
-        #
-        #                 audio_request.save()
-        #
-        #                 self.send({
-        #                     'type': 'websocket.send',
-        #                     'text': json.dumps({
-        #                         "id": audio_request.id,
-        #                         "transcribed_text": audio_request.transcribed_text,
-        #                         "translated_text": audio_request.translated_text,
-        #                         "gpt_response": audio_request.gpt_response,
-        #                         "translated_response": audio_request.translated_response,
-        #                         "response_audio": processed_audio_filename,
-        #                         "user_audio": audio_request.audio.url if audio_request.audio else None
-        #                     })
-        #                 })
-        #             else:
-        #                 self.send({
-        #                     'type': 'websocket.send',
-        #                     'text': json.dumps({'error': f'File {processed_audio_filename} not found'})
-        #                 })
-        #         else:
-        #             self.send({
-        #                 'type': 'websocket.send',
-        #                 'text': json.dumps({'error': 'Audio file data is not a valid base64 string'})
-        #             })
-        # except Exception as e:
-        #     self.send({
-        #         'type': 'websocket.send',
-        #         'text': json.dumps({'error': f'An error occurred: {e}'})
-        #     })
+    # def websocket_receive(self, event):
+    #     print("WebSocket received...", event)
+    #     try:
+    #         if 'text' in event:
+    #             data = json.loads(event['text'])
+    #             page_number = data.get('page_number')
+    #             user_email = data.get('email')
+    #             audio_file_data = data.get('audio_file')
+    #
+    #             if isinstance(audio_file_data, str):
+    #                 audio_bytes = base64.b64decode(audio_file_data)
+    #                 file_name = f"sound_from_user{time.time()}.mp3"
+    #                 audio_file_path = f'static/audio/{file_name}'
+    #
+    #                 # Create directory if it doesn't exist
+    #                 os.makedirs('static/audio', exist_ok=True)
+    #                 with open(audio_file_path, 'wb') as audio_file:
+    #                     audio_file.write(audio_bytes)
+    #
+    #                 instruction = instruction_per_page.objects.get(page_number=page_number)
+    #
+    #                 process_data = ProcessData(user=data.get('id'))
+    #                 processed_data = process_data.process_audio({
+    #                     "audio_file": open(audio_file_path, 'rb'),
+    #                     "instruction": instruction.instruction_text,
+    #                 })
+    #
+    #                 if "error" in processed_data:
+    #                     self.send({
+    #                         'type': 'websocket.send',
+    #                         'text': json.dumps({"error": processed_data["error"]})
+    #                     })
+    #                     return
+    #
+    #                 # processed_audio_filename = processed_data["filename"]
+    #                 # audio_file_full_path = f'static/audio/{processed_audio_filename}'
+    #
+    #                 user = User.objects.get(email=user_email)
+    #                 audio_request = AudioRequest(
+    #                     user=user,
+    #                     page_number=page_number,
+    #                     instruction=instruction.instruction_text,
+    #                     transcribed_text=processed_data["transcribed_text"],
+    #                     translated_text=processed_data["translated_text"],
+    #                     gpt_response=processed_data["gpt_response"],
+    #                     translated_response=processed_data["translated_response"],
+    #                 )
+    #                 audio_request.audio.save(file_name, ContentFile(audio_bytes))
+    #
+    #                 # Save the request without response_audio
+    #                 audio_request.save()
+    #
+    #                 # Send the first response (without response_audio)
+    #                 self.send({
+    #                     'type': 'websocket.send',
+    #                     'text': json.dumps({"type": "incomplete", "data":{
+    #                         "id": audio_request.id,
+    #                         "transcribed_text": audio_request.transcribed_text,
+    #                         "translated_text": audio_request.translated_text,
+    #                         "gpt_response": audio_request.gpt_response,
+    #                         "translated_response": audio_request.translated_response,
+    #                         "audio": self.get_full_url(audio_request.audio.url) if audio_request.audio else None, #user given audio
+    #                         "response_audio": None  # Initially no response audio
+    #                     }})
+    #                 })
+    #
+    #                 incomplete_response = {
+    #                     "type": "incomplete",
+    #                     "data":{
+    #                         "id": audio_request.id,
+    #                         "transcribed_text": audio_request.transcribed_text,
+    #                         "translated_text": audio_request.translated_text,
+    #                         "gpt_response": audio_request.gpt_response,
+    #                         "translated_response": audio_request.translated_response,
+    #                         "user_audio": self.get_full_url(audio_request.audio.url) if audio_request.audio else None,
+    #                         "response_audio": None  # Initially no response audio
+    #                     }
+    #                 }
+    #
+    #                 print("First response:", json.dumps(incomplete_response, indent=4))
+    #
+    #                 timestamp = time.strftime("%Y%m%d_%H%M%S")  # Format timestamp for readability
+    #                 filename = f"Generated_Audio_nor_to_sami_{timestamp}.mp3"
+    #
+    #                 try:
+    #                     # tts = self.tts.tts(translated_text, filename)
+    #                     # from .TTS import tts
+    #                     tts(audio_request.translated_response, filename)
+    #
+    #                 except Exception as e:
+    #                     return {"error": f"Error during TTS generation: {str(e)}"}
+    #
+    #
+    #                 # Function to send the second response after 10 seconds
+    #                 def send_response_audio():
+    #                     time.sleep(10)  # Wait for 10 seconds
+    #                     audio_file_full_path = f'static/audio/{filename}'
+    #
+    #                     while not os.path.exists(audio_file_full_path):
+    #                         time.sleep(5)
+    #
+    #                         # Ensure the file exists and save it
+    #                     if os.path.exists(audio_file_full_path):
+    #                         with open(audio_file_full_path, 'rb') as response_audio_file:
+    #                             audio_request.response_audio.save(
+    #                                 filename,
+    #                                 ContentFile(response_audio_file.read())
+    #                             )
+    #                         audio_request.save()
+    #
+    #                         # Send the second response (with response_audio)
+    #                         self.send({
+    #                             'type': 'websocket.send',
+    #                             'text': json.dumps({"type": "complete", "data":{
+    #                                 "id": audio_request.id,
+    #                                 "transcribed_text": audio_request.transcribed_text,
+    #                                 "translated_text": audio_request.translated_text,
+    #                                 "gpt_response": audio_request.gpt_response,
+    #                                 "translated_response": audio_request.translated_response,
+    #                                 "audio": self.get_full_url(audio_request.audio.url) if audio_request.audio else None, #user given audio
+    #                                 "response_audio": self.get_full_url(audio_request.response_audio.url)  # Include the response audio now
+    #                             }})
+    #                         })
+    #
+    #                         complete_response = {
+    #                             "type": "complete",
+    #                             "data": {
+    #                                 "id": audio_request.id,
+    #                                 "transcribed_text": audio_request.transcribed_text,
+    #                                 "translated_text": audio_request.translated_text,
+    #                                 "gpt_response": audio_request.gpt_response,
+    #                                 "translated_response": audio_request.translated_response,
+    #                                 "user_audio": self.get_full_url(
+    #                                     audio_request.audio.url) if audio_request.audio else None,
+    #                                 "response_audio": self.get_full_url(audio_request.response_audio.url)  # Initially no response audio
+    #                             }
+    #                         }
+    #
+    #                         print("Final response:", json.dumps(complete_response, indent=4))
+    #
+    #                 # Start a new thread to delay and send the second response
+    #                 threading.Thread(target=send_response_audio).start()
+    #
+    #             else:
+    #                 self.send({
+    #                     'type': 'websocket.send',
+    #                     'text': json.dumps({'error': 'Audio file data is not a valid base64 string'})
+    #                 })
+    #
+    #     except Exception as e:
+    #         self.send({
+    #             'type': 'websocket.send',
+    #             'text': json.dumps({'error': f'An error occurred: {e}'})
+    #         })
+    #
+    #
+    # def get_full_url(self, relative_url):
+    #     # Get the host and protocol from the WebSocket scope
+    #     headers = dict((x.decode(), y.decode()) for x, y in self.scope['headers'])
+    #     domain_name = headers.get('host')
+    #     protocol = headers.get('x-forwarded-proto', 'http')  # Defaults to 'http' if not found
+    #     return f'{protocol}://{domain_name}{relative_url}'
 
-# ====================================Below one is final===========================================
+    def websocket_receive(self, event):
+        logger.info("WebSocket received: %s", event)
         try:
             if 'text' in event:
                 data = json.loads(event['text'])
@@ -114,169 +202,165 @@ class MySyncConsumer(SyncConsumer):
                 user_email = data.get('email')
                 audio_file_data = data.get('audio_file')
 
-                if isinstance(audio_file_data, str):
-                    audio_bytes = base64.b64decode(audio_file_data)
-                    file_name = f"sound_from_user{time.time()}.mp3"
-                    audio_file_path = f'static/audio/{file_name}'
+                if not isinstance(audio_file_data, str):
+                    self.send_error("Audio file data is not a valid base64 string")
+                    return
 
-                    # Create directory if it doesn't exist
-                    os.makedirs('static/audio', exist_ok=True)
-                    with open(audio_file_path, 'wb') as audio_file:
-                        audio_file.write(audio_bytes)
+                audio_bytes = base64.b64decode(audio_file_data)
+                file_name = f"sound_from_user{time.time()}.mp3"
+                audio_file_path = self.save_audio_file(audio_bytes, file_name)
 
-                    instruction = instruction_per_page.objects.get(page_number=page_number)
+                # Get user audio duration
+                user_audio_duration = self.get_audio_duration(audio_file_path)
+                print(f"User audio duration: {user_audio_duration} seconds")
 
-                    process_data = ProcessData(user=data.get('id'))
-                    processed_data = process_data.process_audio({
-                        "audio_file": open(audio_file_path, 'rb'),
-                        "instruction": instruction.instruction_text,
-                    })
+                instruction = self.get_instruction(page_number)
+                processed_data = self.process_audio(data, audio_file_path, instruction)
 
-                    if "error" in processed_data:
-                        self.send({
-                            'type': 'websocket.send',
-                            'text': json.dumps({"error": processed_data["error"]})
-                        })
-                        return
+                if "error" in processed_data:
+                    self.send_error(processed_data["error"])
+                    return
 
-                    # processed_audio_filename = processed_data["filename"]
-                    # audio_file_full_path = f'static/audio/{processed_audio_filename}'
+                user = User.objects.get(email=user_email)
+                audio_request = self.create_audio_request(user, page_number, instruction, processed_data, file_name,
+                                                          audio_bytes)
 
-                    user = User.objects.get(email=user_email)
-                    audio_request = AudioRequest(
-                        user=user,
-                        page_number=page_number,
-                        instruction=instruction.instruction_text,
-                        transcribed_text=processed_data["transcribed_text"],
-                        translated_text=processed_data["translated_text"],
-                        gpt_response=processed_data["gpt_response"],
-                        translated_response=processed_data["translated_response"],
-                    )
-                    audio_request.audio.save(file_name, ContentFile(audio_bytes))
-
-                    # Save the request without response_audio
-                    audio_request.save()
-
-                    # Send the first response (without response_audio)
-                    self.send({
-                        'type': 'websocket.send',
-                        'text': json.dumps({"type": "incomplete", "data":{
-                            "id": audio_request.id,
-                            "transcribed_text": audio_request.transcribed_text,
-                            "translated_text": audio_request.translated_text,
-                            "gpt_response": audio_request.gpt_response,
-                            "translated_response": audio_request.translated_response,
-                            "audio": self.get_full_url(audio_request.audio.url) if audio_request.audio else None, #user given audio
-                            "response_audio": None  # Initially no response audio
-                        }})
-                    })
-
-                    incomplete_response = {
-                        "type": "incomplete",
-                        "data":{
-                            "id": audio_request.id,
-                            "transcribed_text": audio_request.transcribed_text,
-                            "translated_text": audio_request.translated_text,
-                            "gpt_response": audio_request.gpt_response,
-                            "translated_response": audio_request.translated_response,
-                            "user_audio": self.get_full_url(audio_request.audio.url) if audio_request.audio else None,
-                            "response_audio": None  # Initially no response audio
-                        }
-                    }
-
-                    print("First response:", json.dumps(incomplete_response, indent=4))
-
-                    timestamp = time.strftime("%Y%m%d_%H%M%S")  # Format timestamp for readability
-                    filename = f"Generated_Audio_nor_to_sami_{timestamp}.mp3"
-
-                    try:
-                        # tts = self.tts.tts(translated_text, filename)
-                        # from .TTS import tts
-                        tts(audio_request.translated_response, filename)
-
-                    except Exception as e:
-                        return {"error": f"Error during TTS generation: {str(e)}"}
-
-                    # print(f"transcribed_text:  {transcribed_text} , \n"
-                    #       f"translated_text: {translated_text}, \n"
-                    #       f"gpt_response: {gpt_response}, "
-                    #       f"translated_response:  {translated_response}, filename: {filename}")
-
-                    # Function to send the second response after 10 seconds
-                    def send_response_audio():
-                        time.sleep(10)  # Wait for 10 seconds
-                        audio_file_full_path = f'static/audio/{filename}'
-
-                        while not os.path.exists(audio_file_full_path):
-                            time.sleep(5)
-
-                            # Ensure the file exists and save it
-                        if os.path.exists(audio_file_full_path):
-                            with open(audio_file_full_path, 'rb') as response_audio_file:
-                                audio_request.response_audio.save(
-                                    filename,
-                                    ContentFile(response_audio_file.read())
-                                )
-                            audio_request.save()
-
-                            # Send the second response (with response_audio)
-                            self.send({
-                                'type': 'websocket.send',
-                                'text': json.dumps({"type": "complete", "data":{
-                                    "id": audio_request.id,
-                                    "transcribed_text": audio_request.transcribed_text,
-                                    "translated_text": audio_request.translated_text,
-                                    "gpt_response": audio_request.gpt_response,
-                                    "translated_response": audio_request.translated_response,
-                                    "audio": self.get_full_url(audio_request.audio.url) if audio_request.audio else None, #user given audio
-                                    "response_audio": self.get_full_url(audio_request.response_audio.url)  # Include the response audio now
-                                }})
-                            })
-
-                            complete_response = {
-                                "type": "complete",
-                                "data": {
-                                    "id": audio_request.id,
-                                    "transcribed_text": audio_request.transcribed_text,
-                                    "translated_text": audio_request.translated_text,
-                                    "gpt_response": audio_request.gpt_response,
-                                    "translated_response": audio_request.translated_response,
-                                    "user_audio": self.get_full_url(
-                                        audio_request.audio.url) if audio_request.audio else None,
-                                    "response_audio": self.get_full_url(audio_request.response_audio.url)  # Initially no response audio
-                                }
-                            }
-
-                            print("Final response:", json.dumps(complete_response, indent=4))
-
-                    # Start a new thread to delay and send the second response
-                    threading.Thread(target=send_response_audio).start()
-
-                else:
-                    self.send({
-                        'type': 'websocket.send',
-                        'text': json.dumps({'error': 'Audio file data is not a valid base64 string'})
-                    })
+                self.send_initial_response(audio_request, user_audio_duration)
+                self.schedule_response_audio(audio_request, processed_data["translated_response"])
 
         except Exception as e:
-            self.send({
-                'type': 'websocket.send',
-                'text': json.dumps({'error': f'An error occurred: {e}'})
-            })
+            self.send_error(f'An error occurred: {e}')
 
+    def save_audio_file(self, audio_bytes, file_name):
+        audio_file_path = f'static/audio/{file_name}'
+        os.makedirs('static/audio', exist_ok=True)
+        with open(audio_file_path, 'wb') as audio_file:
+            audio_file.write(audio_bytes)
+        return audio_file_path
+
+    def get_instruction(self, page_number):
+        return instruction_per_page.objects.get(page_number=page_number)
+
+    def process_audio(self, data, audio_file_path, instruction):
+        process_data = ProcessData(user=data.get('id'))
+        return process_data.process_audio({
+            "audio_file": open(audio_file_path, 'rb'),
+            "instruction": instruction.instruction_text,
+        })
+
+    def create_audio_request(self, user, page_number, instruction, processed_data, file_name, audio_bytes):
+        audio_request = AudioRequest(
+            user=user,
+            page_number=page_number,
+            instruction=instruction.instruction_text,
+            transcribed_text=processed_data["transcribed_text"],
+            translated_text=processed_data["translated_text"],
+            gpt_response=processed_data["gpt_response"],
+            translated_response=processed_data["translated_response"],
+        )
+        audio_request.audio.save(file_name, ContentFile(audio_bytes))
+        audio_request.save()
+        return audio_request
+
+    def send_initial_response(self, audio_request, user_audio_duration):
+        incomplete_response = {
+            "type": "incomplete",
+            "data": {
+                "id": audio_request.id,
+                "transcribed_text": audio_request.transcribed_text,
+                "translated_text": audio_request.translated_text,
+                "gpt_response": audio_request.gpt_response,
+                "translated_response": audio_request.translated_response,
+                "audio": self.get_full_url(audio_request.audio.url),
+                "user_audio_duration": user_audio_duration,
+                "response_audio": None,
+            }
+        }
+        self.send({
+            'type': 'websocket.send',
+            'text': json.dumps(incomplete_response)
+        })
+        print("First response sent: %s", json.dumps(incomplete_response, indent=4))
+        logger.info("First response sent: %s", json.dumps(incomplete_response, indent=4))
+
+    def schedule_response_audio(self, audio_request, translated_response):
+        def send_response_audio():
+            time.sleep(10)  # Wait for 10 seconds
+            filename = self.generate_audio_filename()
+            self.generate_tts_audio(translated_response, filename)
+
+            audio_file_full_path = f'static/audio/{filename}'
+            while not os.path.exists(audio_file_full_path):
+                time.sleep(5)
+
+            if os.path.exists(audio_file_full_path):
+                self.save_and_send_response_audio(audio_request, filename)
+
+        threading.Thread(target=send_response_audio).start()
+
+    def generate_audio_filename(self):
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        return f"Generated_Audio_nor_to_sami_{timestamp}.mp3"
+
+    def generate_tts_audio(self, translated_response, filename):
+        try:
+            tts(translated_response, filename)
+        except Exception as e:
+            logger.error("Error during TTS generation: %s", str(e))
+            print("Error during TTS generation: %s", str(e))
+            self.send_error(f"Error during TTS generation: {str(e)}")
+
+    def save_and_send_response_audio(self, audio_request, filename):
+        audio_file_full_path = f'static/audio/{filename}'
+        with open(audio_file_full_path, 'rb') as response_audio_file:
+            audio_request.response_audio.save(filename, ContentFile(response_audio_file.read()))
+        audio_request.save()
+        # Get user audio duration
+        response_audio_duration = self.get_audio_duration(audio_file_full_path)
+        print(f"Response audio duration: {response_audio_duration} seconds")
+
+        complete_response = {
+            "type": "complete",
+            "data": {
+                "id": audio_request.id,
+                "transcribed_text": audio_request.transcribed_text,
+                "translated_text": audio_request.translated_text,
+                "gpt_response": audio_request.gpt_response,
+                "translated_response": audio_request.translated_response,
+                "audio": self.get_full_url(audio_request.audio.url),
+                "response_audio": self.get_full_url(audio_request.response_audio.url),
+                "response_audio_duration": response_audio_duration,
+            }
+        }
+        self.send({
+            'type': 'websocket.send',
+            'text': json.dumps(complete_response)
+        })
+        print("Final response sent: %s", json.dumps(complete_response, indent=4))
+        logger.info("Final response sent: %s", json.dumps(complete_response, indent=4))
+
+    def send_error(self, message):
+        self.send({
+            'type': 'websocket.send',
+            'text': json.dumps({'error': message})
+        })
 
     def get_full_url(self, relative_url):
-        # Get the host and protocol from the WebSocket scope
         headers = dict((x.decode(), y.decode()) for x, y in self.scope['headers'])
         domain_name = headers.get('host')
-        protocol = headers.get('x-forwarded-proto', 'http')  # Defaults to 'http' if not found
+        protocol = headers.get('x-forwarded-proto', 'http')
         return f'{protocol}://{domain_name}{relative_url}'
 
-
+    def get_audio_duration(self, file_path):
+        audio = AudioSegment.from_file(file_path)
+        return len(audio) / 1000  # duration in seconds
 
 
     def websocket_disconnect(self, event):
         print("WebSocket disconnected...", event)
+
+
+
 
 class MyAsyncConsumer(AsyncConsumer):
 
@@ -289,96 +373,3 @@ class MyAsyncConsumer(AsyncConsumer):
     async def websocket_disconnect(self, event):
         print("WebSocket disconnected...", event)
 
-# import json
-# from channels.generic.websocket import WebsocketConsumer
-#
-# class ChatConsumer(WebsocketConsumer):
-#     def connect(self):
-#         self.accept()
-#
-#     def disconnect(self, close_code):
-#         pass
-#
-#     def receive(self, text_data):
-#         text_data_json = json.loads(text_data)
-#         message = text_data_json['message']
-#
-#         # Send message back to WebSocket
-#         self.send(text_data=json.dumps({
-#             'message': message
-#         }))
-# import time
-# from channels.generic.websocket import AsyncWebsocketConsumer
-# import json
-# # from services.TTS import tts
-# #
-# #
-# class TTSConsumer(AsyncWebsocketConsumer):
-#     async def connect(self):
-#         self.user_id = self.scope['url_route']['kwargs']['user_id']
-#         self.page_number = self.scope['url_route']['kwargs']['page_number']
-#         self.room_group_name = f'tts_{self.user_id}_{self.page_number}'
-#
-#         # Join room group
-#         await self.channel_layer.group_add(
-#             self.room_group_name,
-#             self.channel_name
-#         )
-#         await self.accept()
-#
-#     async def disconnect(self, close_code):
-#         await self.channel_layer.group_discard(
-#             self.room_group_name,
-#             self.channel_name
-#         )
-#
-#     async def receive(self, text_data):
-#         text_data_json = json.loads(text_data)
-#         print("here in channel")
-#         translated_text = text_data_json['translated_text']
-#
-#         # Start TTS processing and streaming
-#         await self.send(text_data=json.dumps({'status': 'processing'}))
-#
-#         try:
-#             # Start TTS and stream chunks
-#             for chunk in tts_stream(translated_text):
-#                 await self.send(text_data=json.dumps({'audio_chunk': chunk}))
-#
-#             # Notify once complete
-#             await self.send(text_data=json.dumps({'status': 'completed', 'file_url': '/path/to/downloaded/file'}))
-#
-#         except Exception as e:
-#             await self.send(text_data=json.dumps({'error': str(e)}))
-#
-#
-# # Stream function for TTS
-# def tts_stream(translated_text):
-#     # Simulate streaming chunks
-#     for i in range(5):
-#         time.sleep(1)
-#         yield f"Chunk {i} of {translated_text}"
-#
-#     # You can also directly stream API responses if the TTS service supports chunked responses
-# class AudioConsumer(AsyncWebsocketConsumer):
-#     async def connect(self):
-#         self.user_id = self.scope['url_route']['kwargs']['user_id']
-#         self.page_number = self.scope['url_route']['kwargs']['page_number']
-#         self.room_group_name = f"{self.user_id}_{self.page_number}"
-#
-#         # Join room group
-#         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-#         await self.accept()
-#
-#     async def disconnect(self, close_code):
-#         # Leave room group
-#         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-#
-#     async def audio_processing_complete(self, event):
-#         # Send message to WebSocket
-#         message = event['message']
-#         file_url = event['file_url']
-#         await self.send(text_data=json.dumps({
-#             'message': message,
-#             'file_url': file_url
-#         }))
