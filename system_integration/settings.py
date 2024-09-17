@@ -71,7 +71,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://0.0.0.0:8081",
     "https://system-integration.mediusware.xyz",
 ]
-
+CSRF_TRUSTED_ORIGINS = [
+     "http://10.0.0.44",
+    "http://16.171.226.102",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    "http://0.0.0.0:8081",
+    'https://system-integration.mediusware.xyz',
+]
 ROOT_URLCONF = "system_integration.urls"
 
 TEMPLATES = [
