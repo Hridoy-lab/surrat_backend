@@ -4,7 +4,7 @@ ENV PYTHONUNBUFFERED 1
 
 RUN apt-get -y update \
     && apt-get install -y --no-install-recommends \
-        postgresql-client \
+        postgresql-client ffmpeg\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
