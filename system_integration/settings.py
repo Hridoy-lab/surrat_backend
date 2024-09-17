@@ -69,6 +69,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8081",
     "http://127.0.0.1:8081",
     "http://0.0.0.0:8081",
+    "https://system-integration.mediusware.xyz",
 ]
 
 ROOT_URLCONF = "system_integration.urls"
