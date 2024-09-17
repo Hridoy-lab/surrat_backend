@@ -347,8 +347,8 @@ class MySyncConsumer(SyncConsumer):
 
     def get_full_url(self, relative_url):
         headers = dict((x.decode(), y.decode()) for x, y in self.scope['headers'])
-        domain_name = headers.get('host')
         protocol = headers.get('x-forwarded-proto', 'http')
+        domain_name = headers.get('host')
         return f'{protocol}://{domain_name}{relative_url}'
 
     def get_audio_duration(self, file_path):

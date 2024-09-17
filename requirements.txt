@@ -29,7 +29,9 @@ djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 drf-spectacular==0.27.2
 exceptiongroup==1.2.1
+ffmpeg-python==0.2.0
 frozenlist==1.4.1
+future==1.0.0
 google-api-core==2.19.1
 google-api-python-client==2.136.0
 google-auth==2.32.0
@@ -94,4 +96,3 @@ uritemplate==4.1.1
 urllib3==2.2.2
 yarl==1.11.1
 zope.interface==7.0.3
-ffmpeg-python
