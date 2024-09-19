@@ -1,5 +1,5 @@
 from django.contrib import admin
-from bot.models import AudioRequest, instruction_per_page
+from bot.models import AudioRequest, instruction_per_page, RequestCounter
 
 
 @admin.register(AudioRequest)
@@ -21,7 +21,12 @@ class AudioRequestInline(admin.TabularInline):
     extra = 0
     readonly_fields = ("id", "audio", "instruction", "transcribed_text", "translated_text", "gpt_response", "translated_response", "page_number", "created_at")
 
+class RequestCounterAdmin(admin.ModelAdmin):
+    list_display = ('user', 'page_number', 'request_count', 'last_request_at', 'updated_at')  # Fields to display in admin panel
+    search_fields = ('user__email', 'page_number')  # Enable searching by user email and page number
+    list_filter = ('page_number', 'user')  # Filter options in admin panel
 
+admin.site.register(RequestCounter, RequestCounterAdmin)
 #
 #
 # class CustomUserAdmin(admin.ModelAdmin):

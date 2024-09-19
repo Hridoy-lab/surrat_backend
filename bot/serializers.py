@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 import mimetypes
-from bot.models import AudioRequest
+from bot.models import AudioRequest, RequestCounter
 
 
 class AudioFileSerializer(serializers.Serializer):
@@ -85,6 +85,16 @@ class UsersAllAudioRequestSerializer(serializers.ModelSerializer):
             return len(response_audio) / 1000.0  # duration in seconds
         return None
 
+class RequestCounterSerializer(serializers.ModelSerializer):
+    # Define the fields to be used for the response
+    user = serializers.ReadOnlyField(source='user.id')  # This will be read-only and automatically set
+    page_number = serializers.IntegerField()  # This field will be required in the request
+    request_count = serializers.ReadOnlyField()  # Read-only for response
+    last_request_at = serializers.ReadOnlyField()  # Read-only for response
+
+    class Meta:
+        model = RequestCounter
+        fields = ['user', 'page_number', 'request_count', 'last_request_at']
 # class AudioRequestQuerySerializer(serializers.Serializer):
 #     page_number = serializers.IntegerField()
 #     user = serializers.EmailField()

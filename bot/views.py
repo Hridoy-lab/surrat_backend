@@ -1,14 +1,16 @@
 import base64
 import time
+from datetime import datetime, timedelta
 import logging
-
+from django.utils import timezone
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 import os
 from rest_framework import generics
 from users.models import ChatHistory
-from .models import instruction_per_page, AudioRequest
+from .models import instruction_per_page, AudioRequest, RequestCounter
 from .services.ai_services import AIService, ProcessData
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -18,7 +20,7 @@ from bot.serializers import (
     AudioFileSerializer,
     TranslationSerializer,
     TranscriptSerializer,
-    AudioRequestSerializer, UsersAllAudioRequestSerializer,
+    AudioRequestSerializer, UsersAllAudioRequestSerializer, RequestCounterSerializer,
 )
 from subscriptions.permissions import HasActiveSubscription
 from bot.services.translate import Translator
@@ -27,7 +29,7 @@ from .services.transcribe import Transcriber
 # Create your views here.
 logger = logging.getLogger(__name__)
 ai_service = AIService()
-
+User = get_user_model()
 
 class ProcessAudio(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -275,6 +277,114 @@ class AudioRequestListView(generics.ListAPIView):
     #         return Response({'detail': str(e)}, status=500)
 
 
+
+
+class AudioRequestCountView(APIView):
+    serializer_class = RequestCounterSerializer
+    permission_classes = [IsAuthenticated]  # Ensures the user is authenticated
+
+    # def post(self, request):
+    #     page_number = request.data.get('page_number')
+    #
+    #     # Ensure that page_number is provided
+    #     if not page_number:
+    #         return Response({"error": "page_number is required."}, status=status.HTTP_400_BAD_REQUEST)
+    #
+    #     # Get or create a RequestCounter object for the user and page number
+    #     request_counter, created = RequestCounter.objects.get_or_create(
+    #         user=request.user,
+    #         page_number=page_number
+    #     )
+    #
+    #     # If this is not a new entry, calculate how many days have passed since the last request
+    #     if not created:
+    #         now = timezone.now()  # Use timezone-aware datetime
+    #         print(now)
+    #         last_request_at = request_counter.last_request_at
+    #         print(last_request_at)
+    #         updated_at = request_counter.updated_at.date()
+    #         print(updated_at)
+    #         if updated_at != now.date():
+    #
+    #             if last_request_at.tzinfo is None:  # If last_request_at is naive
+    #                 last_request_at = timezone.make_aware(last_request_at)  # Convert to aware
+    #
+    #             days_elapsed = (now - last_request_at).days
+    #             print("Days elapsed:", days_elapsed)
+    #
+    #             # Decrease request_count by days_elapsed, but not below 0
+    #             new_request_count = max(request_counter.request_count - days_elapsed, 0)
+    #
+    #             # Update request_count and last_request_at
+    #             request_counter.request_count = new_request_count
+    #             request_counter.updated_at = now
+    #             # request_counter.last_request_at = now
+    #             request_counter.save()
+    #     else:
+    #         # If created, initialize request_count
+    #         request_counter.request_count = 1
+    #         request_counter.last_request_at = timezone.now()
+    #         request_counter.save()
+    #
+    #     print(f"Request count for page {page_number} is {request_counter.request_count}")
+    #
+    #     # Serialize the data using the serializer class
+    #     serializer = self.serializer_class(request_counter)
+    #
+    #     # Return the response with the serialized data
+    #     return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        page_number = request.query_params.get('page_number')
+        print(page_number)
+
+        # Ensure that page_number is provided
+        if not page_number:
+            return Response({"error": "page_number is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get or create a RequestCounter object for the user and page number
+        request_counter, created = RequestCounter.objects.get_or_create(
+            user=request.user,
+            page_number=page_number
+        )
+
+        # If this is not a new entry, calculate how many days have passed since the last request
+        if not created:
+            now = timezone.now()  # Use timezone-aware datetime
+            print(now)
+            last_request_at = request_counter.last_request_at
+            print(last_request_at)
+            updated_at = request_counter.updated_at.date()
+            print(updated_at)
+            if updated_at != now.date():
+
+                if last_request_at.tzinfo is None:  # If last_request_at is naive
+                    last_request_at = timezone.make_aware(last_request_at)  # Convert to aware
+
+                days_elapsed = (now - last_request_at).days
+                print("Days elapsed:", days_elapsed)
+
+                # Decrease request_count by days_elapsed, but not below 0
+                new_request_count = max(request_counter.request_count - days_elapsed, 0)
+
+                # Update request_count and last_request_at
+                request_counter.request_count = new_request_count
+                request_counter.updated_at = now
+                # request_counter.last_request_at = now
+                request_counter.save()
+        else:
+            # If created, initialize request_count
+            request_counter.request_count = 1
+            request_counter.last_request_at = timezone.now()
+            request_counter.save()
+
+        print(f"Request count for page {page_number} is {request_counter.request_count}")
+
+        # Serialize the data using the serializer class
+        serializer = self.serializer_class(request_counter)
+
+        # Return the response with the serialized data
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 

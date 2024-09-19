@@ -3,6 +3,8 @@ import threading
 import time
 import json
 import base64
+from datetime import timedelta
+from django.utils import timezone
 # from html.parser import incomplete
 
 import logging
@@ -10,7 +12,7 @@ from time import process_time
 from pydub import AudioSegment
 from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
-from .models import AudioRequest, instruction_per_page
+from .models import AudioRequest, instruction_per_page, RequestCounter
 # from channels.generic.websocket import SyncConsumer
 from channels.consumer import SyncConsumer, AsyncConsumer
 
@@ -194,6 +196,74 @@ class MySyncConsumer(SyncConsumer):
     #     return f'{protocol}://{domain_name}{relative_url}'
 
     def websocket_receive(self, event):
+        # logger.info("WebSocket received: %s", event)
+        # try:
+        #     if 'text' in event:
+        #         data = json.loads(event['text'])
+        #         page_number = data.get('page_number')
+        #         user_email = data.get('email')
+        #         audio_file_data = data.get('audio_file')
+        #
+        #         # Get the user
+        #         user = User.objects.get(email=user_email)
+        #
+        #         # Check the user's request count for today
+        #         audio_request = AudioRequest.objects.filter(user=user, page_number=page_number).order_by(
+        #             '-created_at').first()
+        #
+        #         current_time = timezone.now()
+        #         if audio_request:
+        #             # Calculate time difference from last request
+        #             time_since_last_request = current_time - audio_request.last_request_at if audio_request.last_request_at else timedelta(
+        #                 days=1)
+        #
+        #             if time_since_last_request.days == 0 and audio_request.request_count >= 2:
+        #                 self.send_error(
+        #                     "You have reached the maximum number of requests for today. Please try again tomorrow.")
+        #                 return
+        #             elif time_since_last_request.days >= 1:
+        #                 # Reset the count (decrease by 1 each day)
+        #                 audio_request.request_count = max(audio_request.request_count - 1, 0)
+        #                 audio_request.last_request_at = current_time
+        #                 audio_request.save()
+        #
+        #         # Increment the request count
+        #         if audio_request:
+        #             audio_request.request_count += 1
+        #         else:
+        #             audio_request = AudioRequest(user=user, page_number=page_number, request_count=1,
+        #                                          last_request_at=current_time)
+        #
+        #         audio_request.save()
+        #
+        #         if not isinstance(audio_file_data, str):
+        #             self.send_error("Audio file data is not a valid base64 string")
+        #             return
+        #
+        #         audio_bytes = base64.b64decode(audio_file_data)
+        #         file_name = f"sound_from_user{time.time()}.mp3"
+        #         audio_file_path = self.save_audio_file(audio_bytes, file_name)
+        #
+        #         # Get user audio duration
+        #         user_audio_duration = self.get_audio_duration(audio_file_path)
+        #         print(f"User audio duration: {user_audio_duration} seconds")
+        #
+        #         instruction = self.get_instruction(page_number)
+        #         processed_data = self.process_audio(data, audio_file_path, instruction)
+        #
+        #         if "error" in processed_data:
+        #             self.send_error(processed_data["error"])
+        #             return
+        #
+        #         user = User.objects.get(email=user_email)
+        #         audio_request = self.create_audio_request(user, page_number, instruction, processed_data, file_name,
+        #                                                   audio_bytes)
+        #
+        #         self.send_initial_response(audio_request, user_audio_duration)
+        #         self.schedule_response_audio(audio_request, processed_data["translated_response"])
+        #
+        # except Exception as e:
+        #     self.send_error(f'An error occurred: {e}')
         logger.info("WebSocket received: %s", event)
         try:
             if 'text' in event:
@@ -202,6 +272,84 @@ class MySyncConsumer(SyncConsumer):
                 user_email = data.get('email')
                 audio_file_data = data.get('audio_file')
 
+                # Get the user
+                user = User.objects.get(email=user_email)
+
+                # # Check the user's request count for today using RequestCounter
+                # request_counter = RequestCounter.objects.filter(user=user, page_number=page_number).first()
+                #
+                # current_time = timezone.now()
+                #
+                # if request_counter:
+                #     if request_counter.last_request_at:
+                #         time_since_last_request = current_time - request_counter.last_request_at
+                #     else:
+                #         time_since_last_request = timedelta(days=1)  # Assume it was more than a day ago
+                #
+                #     if time_since_last_request.days == 0 and request_counter.request_count >= 4:
+                #         self.send_error(
+                #             "You have reached the maximum number of requests for today. Please try again tomorrow.")
+                #         return
+                #     elif time_since_last_request.days >= 1:
+                #         request_counter.request_count = max(request_counter.request_count - 1, 0)
+                #         request_counter.last_request_at = current_time
+                #         request_counter.save()
+                # else:
+                #     request_counter = RequestCounter(user=user, page_number=page_number, request_count=0,
+                #                                      last_request_at=current_time)
+                #
+                # request_counter.request_count += 1
+                # request_counter.last_request_at = current_time
+                # request_counter.save()
+
+                #============================== Giving 1 chance after each 5 minuts======================
+                request_counter = RequestCounter.objects.filter(user=user, page_number=page_number).first()
+
+                current_time = timezone.now()
+
+                if request_counter.request_count >= 5:
+                    # self.send_error(
+                    #     "You have reached the maximum number of requests for today. Please try again after 5 minutes.")
+                    max_level_response = {
+                        "type": "max_imit_reached",
+                        "data": {
+                            "message": "You have reached the maximum number of requests for today. Please try again tomorrow."
+                        }
+                    }
+
+                    self.send({
+                        'type': 'websocket.send',
+                        'text': json.dumps(max_level_response)
+                    })
+                    return
+
+
+                # if request_counter:
+                #     if request_counter.last_request_at:
+                #         time_since_last_request = current_time - request_counter.last_request_at
+                #         time_since_last_request_in_minutes = time_since_last_request.total_seconds() / 60  # Convert to minutes
+                #     else:
+                #         time_since_last_request_in_minutes = 5  # Assume it's more than 5 minutes ago for the first time
+                #
+                #     if time_since_last_request_in_minutes < 5 and request_counter.request_count >= 10:
+                #         self.send_error(
+                #             "You have reached the maximum number of requests for today. Please try again after 5 minutes.")
+                #         return
+                #     elif time_since_last_request_in_minutes >= 5:
+                #         # Increase the available request count by 1 for every 5 minutes passed
+                #         additional_requests = int(time_since_last_request_in_minutes // 5)
+                #         request_counter.request_count = max(request_counter.request_count - additional_requests, 0)
+                #         request_counter.last_request_at = current_time
+                #         request_counter.updated_at = current_time
+                #         request_counter.save()
+                # else:
+                #     # If no request exists for this page number, create a new counter for this user and page
+                #     request_counter = RequestCounter(user=user, page_number=page_number, request_count=0,
+                #                                      last_request_at=current_time, updated_at=current_time)
+
+
+
+                # Proceed with audio processing
                 if not isinstance(audio_file_data, str):
                     self.send_error("Audio file data is not a valid base64 string")
                     return
@@ -221,12 +369,18 @@ class MySyncConsumer(SyncConsumer):
                     self.send_error(processed_data["error"])
                     return
 
-                user = User.objects.get(email=user_email)
+
                 audio_request = self.create_audio_request(user, page_number, instruction, processed_data, file_name,
                                                           audio_bytes)
 
                 self.send_initial_response(audio_request, user_audio_duration)
-                self.schedule_response_audio(audio_request, processed_data["translated_response"])
+                flag = self.schedule_response_audio(audio_request, processed_data["translated_response"], user_audio_duration)
+                if flag:
+                    # Increment the request count for this request
+                    request_counter.request_count += 1
+                    request_counter.last_request_at = current_time  # Update last request time
+                    request_counter.updated_at = current_time  # Update last request time
+                    request_counter.save()
 
         except Exception as e:
             self.send_error(f'An error occurred: {e}')
@@ -272,7 +426,7 @@ class MySyncConsumer(SyncConsumer):
                 "gpt_response": audio_request.gpt_response,
                 "translated_response": audio_request.translated_response,
                 "audio": self.get_full_url(audio_request.audio.url),
-                "user_audio_duration": user_audio_duration,
+                "audio_duration": user_audio_duration,
                 "response_audio": None,
             }
         }
@@ -283,7 +437,7 @@ class MySyncConsumer(SyncConsumer):
         print("First response sent: %s", json.dumps(incomplete_response, indent=4))
         logger.info("First response sent: %s", json.dumps(incomplete_response, indent=4))
 
-    def schedule_response_audio(self, audio_request, translated_response):
+    def schedule_response_audio(self, audio_request, translated_response, user_audio_duration):
         def send_response_audio():
             time.sleep(10)  # Wait for 10 seconds
             filename = self.generate_audio_filename()
@@ -294,9 +448,10 @@ class MySyncConsumer(SyncConsumer):
                 time.sleep(5)
 
             if os.path.exists(audio_file_full_path):
-                self.save_and_send_response_audio(audio_request, filename)
+                self.save_and_send_response_audio(audio_request, filename, user_audio_duration)
 
         threading.Thread(target=send_response_audio).start()
+        return True
 
     def generate_audio_filename(self):
         timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -310,7 +465,7 @@ class MySyncConsumer(SyncConsumer):
             print("Error during TTS generation: %s", str(e))
             self.send_error(f"Error during TTS generation: {str(e)}")
 
-    def save_and_send_response_audio(self, audio_request, filename):
+    def save_and_send_response_audio(self, audio_request, filename, user_audio_duration):
         audio_file_full_path = f'static/audio/{filename}'
         with open(audio_file_full_path, 'rb') as response_audio_file:
             audio_request.response_audio.save(filename, ContentFile(response_audio_file.read()))
@@ -328,6 +483,7 @@ class MySyncConsumer(SyncConsumer):
                 "gpt_response": audio_request.gpt_response,
                 "translated_response": audio_request.translated_response,
                 "audio": self.get_full_url(audio_request.audio.url),
+                "audio_duration": user_audio_duration,
                 "response_audio": self.get_full_url(audio_request.response_audio.url),
                 "response_audio_duration": response_audio_duration,
             }
