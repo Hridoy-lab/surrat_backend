@@ -212,7 +212,7 @@ class MySyncConsumer(SyncConsumer):
 
                 current_time = timezone.now()
 
-                if request_counter.request_count >= 5:
+                if request_counter.request_count >= 10:
                     # self.send_error(
                     #     "You have reached the maximum number of requests for today. Please try again after 5 minutes.")
                     max_level_response = {
