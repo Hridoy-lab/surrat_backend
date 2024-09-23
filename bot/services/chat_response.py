@@ -93,7 +93,7 @@ class GPTResponseHandler:
         # Here, you can include any system-level instructions that guide the conversation.
         return {
             "role": "system",
-            "content": "You are a helpful assistant in Norwegian. You will always respond in Norwegian Bokmål, not in any other language. Please assist the user with their queries and images if there are any."
+            "content": "You are a helpful assistant in Norwegian Bokmål. You will always respond in Norwegian Bokmål, not in any other language. Please assist the user with their queries and images if there are any."
         }
 
     def create_prompt(self, current_text, instruction):
