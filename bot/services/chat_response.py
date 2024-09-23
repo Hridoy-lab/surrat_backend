@@ -1,7 +1,7 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
-
+import requests
 from bot.models import AudioRequest
 
 load_dotenv()
@@ -93,7 +93,7 @@ class GPTResponseHandler:
         # Here, you can include any system-level instructions that guide the conversation.
         return {
             "role": "system",
-            "content": "You are a helpful assistant in Norwegian Language. You will always give response in Norwegian language not in any other language. Please assist the user with their queries and images if image have."
+            "content": "You are a helpful assistant in Norwegian. You will always respond in Norwegian Bokmål, not in any other language. Please assist the user with their queries and images if there are any."
         }
 
     def create_prompt(self, current_text, instruction):
@@ -103,7 +103,55 @@ class GPTResponseHandler:
         prompt.append({"role": "user", "content": f"{instruction}: {current_text}"})
         return prompt
 
-    def get_gpt_response(self, current_text, instruction):
+    def get_gpt_response(self, current_text, instruction, instruction_image=None):
+        if instruction_image is not None:
+            print("here we go...")
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"
+            }
+
+            payload = {
+                "model": "gpt-4o-mini",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant in Norwegian Bokmål. You will always respond in Norwegian Bokmål, not in any other language. Please assist the user with their queries and images if there are any."
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": current_text,
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{instruction_image}"
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": f"instruction: {instruction}"
+                            },
+                        ]
+                    }
+                ],
+                # "max_tokens": 300
+            }
+
+            response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+            print("This is a response with image: ", response.json())
+            # Convert the response to JSON
+            response_data = response.json()
+            assistant_response = response_data['choices'][0]['message']['content']
+            print("Assistant's response:", assistant_response)
+
+            return assistant_response
+
+
+        print("I am here")
         # Prepare the prompt for the GPT model
         messages = self.create_prompt(
             current_text=current_text, instruction=instruction

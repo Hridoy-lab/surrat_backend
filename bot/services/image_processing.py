@@ -36,18 +36,22 @@ def send_image_to_gpt(base64_image, text):
         "model": "gpt-4o-mini",
         "messages": [
             {
+                "role": "system",
+                "content": "You are a helpful assistant in Norwegian Bokmål. You will always respond in Norwegian Bokmål, not in any other language. Please assist the user with their queries and images if there are any."
+            },
+            {
                 "role": "user",
                 "content": [
-                    {
-                        "type": "text",
-                        "text": text
-                    },
                     {
                         "type": "image_url",
                         "image_url": {
                             "url": f"data:image/jpeg;base64,{base64_image}"
                         }
-                    }
+                    },
+                    {
+                        "type": "text",
+                        "text": f"instruction: {text}"
+                    },
                 ]
             }
         ],

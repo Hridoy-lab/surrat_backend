@@ -354,14 +354,14 @@ class AudioRequestCountView(APIView):
             print(now)
             last_request_at = request_counter.last_request_at
             print(last_request_at)
-            updated_at = request_counter.updated_at.date()
-            print(updated_at)
+            updated_at = request_counter.updated_at
+            print(updated_at.date())
             if updated_at != now.date():
 
                 if last_request_at.tzinfo is None:  # If last_request_at is naive
-                    last_request_at = timezone.make_aware(last_request_at)  # Convert to aware
+                    last_request_at = timezone.make_aware(updated_at)  # Convert to aware
 
-                days_elapsed = (now - last_request_at).days
+                days_elapsed = (now - updated_at).days
                 print("Days elapsed:", days_elapsed)
 
                 # Decrease request_count by days_elapsed, but not below 0

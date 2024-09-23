@@ -99,12 +99,24 @@ class ProcessData:
             return {"error": f"Error during translation: {str(e)}"}
 
         try:
-            # Send the translated text with the instruction to GPT/LLM
-            gpt_response = self.gpt_handler.get_gpt_response(
-                current_text=translated_text,
-                instruction=data["instruction"],
-            )
-            print(f"GPT Response: {gpt_response}")
+            print("In a AI services")
+            # print("Here is data image: ",data["instruction_image"])
+            if data.get("instruction_image"):
+                gpt_response = self.gpt_handler.get_gpt_response(
+                    current_text=translated_text,
+                    instruction=data["instruction"],
+                    instruction_image=data["instruction_image"]
+                )
+                print(f"GPT Response: {gpt_response}")
+
+            else:
+
+                # Send the translated text with the instruction to GPT/LLM
+                gpt_response = self.gpt_handler.get_gpt_response(
+                    current_text=translated_text,
+                    instruction=data["instruction"],
+                )
+                print(f"GPT Response: {gpt_response}")
 
         except Exception as e:
             return {"error": f"Error during GPT response generation: {str(e)}"}
