@@ -260,7 +260,7 @@ class MySyncConsumer(SyncConsumer):
                     # Increment the request count for this request
                     request_counter.request_count += 1
                     request_counter.last_request_at = current_time  # Update last request time
-                    request_counter.updated_at = current_time  # Update last request time
+                    # request_counter.updated_at = current_time  # Update last request time
                     request_counter.save()
 
         except Exception as e:

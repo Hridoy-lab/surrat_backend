@@ -351,27 +351,28 @@ class AudioRequestCountView(APIView):
         # If this is not a new entry, calculate how many days have passed since the last request
         if not created:
             now = timezone.now()  # Use timezone-aware datetime
-            print(now)
+            print("Now: ", now)
             last_request_at = request_counter.last_request_at
-            print(last_request_at)
+            print("Last: ", last_request_at)
             updated_at = request_counter.updated_at
-            print(updated_at.date())
-            if updated_at != now.date():
+            print("Update", updated_at)
+            if updated_at.date() != now.date():
 
                 if last_request_at.tzinfo is None:  # If last_request_at is naive
                     last_request_at = timezone.make_aware(updated_at)  # Convert to aware
 
                 days_elapsed = (now - updated_at).days
                 print("Days elapsed:", days_elapsed)
+                if days_elapsed != 0:
 
-                # Decrease request_count by days_elapsed, but not below 0
-                new_request_count = max(request_counter.request_count - days_elapsed, 0)
+                    # Decrease request_count by days_elapsed, but not below 0
+                    new_request_count = max(request_counter.request_count - days_elapsed, 0)
 
-                # Update request_count and last_request_at
-                request_counter.request_count = new_request_count
-                request_counter.updated_at = now
-                # request_counter.last_request_at = now
-                request_counter.save()
+                    # Update request_count and last_request_at
+                    request_counter.request_count = new_request_count
+                    request_counter.updated_at = now
+                    # request_counter.last_request_at = now
+                    request_counter.save()
         else:
             # If created, initialize request_count
             request_counter.request_count = 1
