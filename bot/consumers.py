@@ -218,7 +218,7 @@ class MySyncConsumer(SyncConsumer):
                     max_level_response = {
                         "type": "max_imit_reached",
                         "data": {
-                            "message": "You have reached the maximum number of requests for today. Please try again tomorrow."
+                            "message": "You have reached the maximum number of requests for today. Please try again after 24hr."
                         }
                     }
 

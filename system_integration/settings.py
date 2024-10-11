@@ -168,8 +168,8 @@ SIMPLE_JWT = {
 
 # DRF Spectacular configuration
 SPECTACULAR_SETTINGS = {
-    "TITLE": "System Integration",
-    "DESCRIPTION": "Your project description",
+    "TITLE": "Surrat",
+    "DESCRIPTION": "This is the backend API segment that integrates with the mobile app. It handles various tasks, including account creation, profile settings, chatbot interactions, subscription management, payment processing, as well as translation, transcription, and text-to-speech (TTS) services.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
