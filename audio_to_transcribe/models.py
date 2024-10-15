@@ -1,3 +1,4 @@
+import time
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -22,11 +23,36 @@ class audio_to_text(models.Model):
         # Save the object initially to ensure the audio file is uploaded.
         super().save(*args, **kwargs)
 
-        # Proceed only if an audio file is present and the text has not been transcribed yet.
-        if self.audio:
-            self._transcribe_audio()
+        # # Proceed only if an audio file is present and the text has not been transcribed yet.
+        # if self.audio:
+        #     self._transcribe_audio()
+        # Attempt transcription with retries.
+        success = self._transcribe_audio_with_retry()
+        if not success:
+            print("Failed to transcribe the audio after 3 attempts.")
+            raise ValidationError("Failed to transcribe the audio after 3 attempts.")
 
         super().save(*args, **kwargs)  # Save the updated instance with transcribed text.
+
+    def _transcribe_audio_with_retry(self):
+        """
+        Attempts to transcribe the audio file up to 3 times with a 20-second delay between attempts.
+        Returns True if successful, False if all attempts fail.
+        """
+        max_attempts = 5
+        delay = 20  # 20 seconds
+        for attempt in range(max_attempts):
+            try:
+                self._transcribe_audio()
+                return True  # Successful transcription, exit retry loop
+            except ValidationError as e:
+                if attempt < max_attempts - 1:
+                    # Wait before retrying
+                    time.sleep(delay)
+                else:
+                    # If this is the final attempt, log the error and return failure
+                    print(f"Attempt {attempt + 1} failed: {e}")
+                    return False  # All attempts failed
 
     def _transcribe_audio(self):
         """
@@ -46,6 +72,25 @@ class audio_to_text(models.Model):
 
         # Set the transcribed text on the model.
         self.transcribed_text = result["transcribed_text"]
+
+    # def _transcribe_audio(self):
+    #     """
+    #     Transcribe the uploaded audio file using ExternalProcessData.
+    #     Raises a ValidationError if transcription fails.
+    #     """
+    #     processor = ExternalProcessData(self.user)
+    #     data = {
+    #         "audio_file": self.audio,
+    #     }
+    #
+    #     # Attempt to process and transcribe the audio file.
+    #     result = processor.process_audio(data)
+    #
+    #     if "error" in result:
+    #         raise ValidationError(result["error"])
+    #
+    #     # Set the transcribed text on the model.
+    #     self.transcribed_text = result["transcribed_text"]
 
     class Meta:
         verbose_name = "Audio to Text"  # Singular name in admin
