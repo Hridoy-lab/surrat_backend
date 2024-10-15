@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "bot",
     "users",
     "subscriptions",
+    "audio_to_transcribe"
 ]
 
 MIDDLEWARE = [

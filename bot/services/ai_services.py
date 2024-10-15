@@ -154,3 +154,25 @@ class ProcessData:
             "translated_response": translated_response.strip('\"'),
             # 'filename': filename
         }
+
+
+
+class ExternalProcessData:
+    def __init__(self, user):
+        self.user = user
+        self.transcriber = Transcriber()
+
+    def process_audio(self, data):
+        try:
+            # Convert audio to text using the transcriber
+            transcribed_text = self.transcriber.transcribe_voice(data["audio_file"])
+            if not transcribed_text:
+                raise ValueError(
+                    "Transcription failed: No text was extracted from the audio."
+                )
+
+            # Return the transcribed text
+            return {"transcribed_text": transcribed_text}
+
+        except Exception as e:
+            return {"error": f"Error during transcription: {str(e)}"}
