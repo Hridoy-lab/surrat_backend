@@ -47,4 +47,3 @@ class AudioToTextAdmin(admin.ModelAdmin):
         if obj and obj.user != request.user:
             return False  # Prevent users from deleting others' content
         return super().has_delete_permission(request, obj)
-
