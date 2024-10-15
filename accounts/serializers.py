@@ -1,5 +1,4 @@
 from email._header_value_parser import get_token
-
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from django.utils import timezone
