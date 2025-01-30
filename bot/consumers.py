@@ -212,21 +212,21 @@ class MySyncConsumer(SyncConsumer):
 
                 current_time = timezone.now()
 
-                if request_counter.request_count >= 10:
-                    # self.send_error(
-                    #     "You have reached the maximum number of requests for today. Please try again after 5 minutes.")
-                    max_level_response = {
-                        "type": "max_imit_reached",
-                        "data": {
-                            "message": "You have reached the maximum number of requests for today. Please try again after 24hr."
-                        }
-                    }
-
-                    self.send({
-                        'type': 'websocket.send',
-                        'text': json.dumps(max_level_response)
-                    })
-                    return
+                # if request_counter.request_count >= 10:
+                #     # self.send_error(
+                #     #     "You have reached the maximum number of requests for today. Please try again after 5 minutes.")
+                #     max_level_response = {
+                #         "type": "max_imit_reached",
+                #         "data": {
+                #             "message": "You have reached the maximum number of requests for today. Please try again after 24hr."
+                #         }
+                #     }
+                #
+                #     self.send({
+                #         'type': 'websocket.send',
+                #         'text': json.dumps(max_level_response)
+                #     })
+                #     return
 
                 # Proceed with audio processing
                 if not isinstance(audio_file_data, str):
