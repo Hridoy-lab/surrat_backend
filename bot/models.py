@@ -61,6 +61,13 @@ class instruction_per_page(models.Model):
     def __str__(self):
         return f"Page {self.page_number}"
 
+    def save(self, *args, **kwargs):
+        if self.pk:  # Check if the object is already saved (i.e., it has a primary key)
+            original = instruction_per_page.objects.get(pk=self.pk)
+            if self.page_number != original.page_number:
+                raise ValidationError("You cannot change the page number after creation.")
+        super().save(*args, **kwargs)
+
     # def clean(self):
     #     super().clean()
     #     if not self.instruction_text and not self.instruction_image:

@@ -2,6 +2,11 @@ from django.contrib import admin
 from accounts.models import CustomUser
 from bot.admin import AudioRequestInline
 
+from django.contrib import admin
+
+admin.site.site_header = "SURRAT Admin Panel"
+admin.site.site_title = "SURRAT Admin"
+admin.site.index_title = "Welcome to SURRAT Admin"
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
