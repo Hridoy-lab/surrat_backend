@@ -1,4 +1,4 @@
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 import requests
 from django.utils import timezone
@@ -70,7 +70,8 @@ class UserInfoFromTokenAPI(APIView):
             "last_name": user.last_name,
             "email": user.email,
             "hint": user.hints,
-            "transcribe_text": user.transcribed,
+            "allow_data_for_training": user.allow_data_for_training,
+        "transcribe_text": user.transcribed,
             "dp": user.profile_picture.url if user.profile_picture else None,
         }
         return Response(user_data, status=status.HTTP_200_OK)
@@ -104,7 +105,7 @@ class UserInfoFromTokenAPI(APIView):
 
 
 class UpdateUserInfoAPI(APIView):
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
     permission_classes = [IsAuthenticated]
     serializer_class = UpdateUserSerializer  # Reference the serializer class here
 

@@ -231,7 +231,7 @@ class AccessTokenSerializer(serializers.Serializer):
 class UpdateUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'profile_picture', 'hints', 'transcribed']  # Only allow updating these fields
+        fields = ['first_name', 'last_name', 'profile_picture', 'hints', 'transcribed', 'allow_data_for_training']  # Only allow updating these fields
 
     def update(self, instance, validated_data):
         instance.first_name = validated_data.get('first_name', instance.first_name)
@@ -245,6 +245,7 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         # Update 'hints' and 'transcribed'
         instance.hints = validated_data.get('hints', instance.hints)
         instance.transcribed = validated_data.get('transcribed', instance.transcribed)
+        instance.allow_data_for_training = validated_data.get('allow_data_for_training', instance.allow_data_for_training)
 
         instance.save()
         return instance
