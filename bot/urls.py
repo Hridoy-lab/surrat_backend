@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import ProcessAudio, Translate, Transcript, AudioRequestView, AudioRequestListView, \
-    AudioRequestCountView
+    AudioRequestCountView, UserAudioRequestsView
 
 urlpatterns = [
     path("api/process_audio/", ProcessAudio.as_view(), name="process_audio_api"),
@@ -9,4 +9,7 @@ urlpatterns = [
     path("api/audiorequest/", AudioRequestView.as_view(), name="audiorequest"),
     path("api/daily-request/", AudioRequestCountView.as_view(), name='todays-audio-request-count'),
     path('api/all-audio-requests/', AudioRequestListView.as_view(), name='audio-requests-list'),
+
+    path('my-audio-requests/', UserAudioRequestsView.as_view(), name='user-audio-requests'),
+
 ]
