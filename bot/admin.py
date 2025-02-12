@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from bot.models import AudioRequest, instruction_per_page, RequestCounter
+from bot.models import AudioRequest, instruction_per_page, RequestCounter, ArchivedAudioRequest
 
 
 @admin.register(AudioRequest)
@@ -86,17 +86,7 @@ class InstructionAdmin(admin.ModelAdmin):
 
 
 
-# @admin.register(instruction_per_page)
-# class InstructionAdmin(admin.ModelAdmin):
-#     list_display = ("page_number","instruction_text")
-#     list_filter = ("page_number", "instruction_text")
-#     search_fields = ("page_number", "instruction_text")
-#
-#     def get_readonly_fields(self, request, obj=None):
-#         # If the object is already saved (i.e., it's being edited), make page_number read-only
-#         if obj:
-#             return self.readonly_fields + ('page_number',)
-#         return self.readonly_fields
-#
-#     def has_delete_permission(self, request, obj=None):
-#         return False
+@admin.register(ArchivedAudioRequest)
+class ArchivedAudioRequestAdmin(admin.ModelAdmin):
+    pass
+

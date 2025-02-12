@@ -110,3 +110,4 @@ vine==5.1.0
 wcwidth==0.2.13
 yarl==1.11.1
 zope.interface==7.0.3
+celery~=5.4.0

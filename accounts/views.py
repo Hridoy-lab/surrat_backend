@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 import requests
@@ -61,6 +62,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class UserInfoFromTokenAPI(APIView):
     permission_classes = [IsAuthenticated]
     # serializer_class = AccessTokenSerializer
+
+    @extend_schema(
+        tags=['Profile']
+    )
     def get(self, request):
         # If authenticated, get the user from the request
         user = request.user
@@ -71,7 +76,7 @@ class UserInfoFromTokenAPI(APIView):
             "email": user.email,
             "hint": user.hints,
             "allow_data_for_training": user.allow_data_for_training,
-        "transcribe_text": user.transcribed,
+            "transcribe_text": user.transcribed,
             "dp": user.profile_picture.url if user.profile_picture else None,
         }
         return Response(user_data, status=status.HTTP_200_OK)
@@ -109,6 +114,9 @@ class UpdateUserInfoAPI(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UpdateUserSerializer  # Reference the serializer class here
 
+    @extend_schema(
+        tags=['Profile']
+    )
     def patch(self, request):
         user = request.user
         serializer = self.serializer_class(user, data=request.data,
@@ -151,10 +159,23 @@ class UserList(generics.ListAPIView):
     serializer_class = CustomUserSerializer
     page_size = 1
 
+    @extend_schema(
+        tags=['Profile']
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+
 
 class UserDetail(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
+
+    @extend_schema(
+        tags=['Profile']
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 
 class PasswordResetView(generics.GenericAPIView):

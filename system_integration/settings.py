@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import os
+
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -48,6 +50,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "corsheaders",
+    "django_celery_beat",
+    'django_celery_results',
     "bot",
     "users",
     "subscriptions",
@@ -144,6 +148,25 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Custom user model
 AUTH_USER_MODEL = "accounts.CustomUser"
 
+
+
+# Celery Configuration
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+# Django Celery Beat Configuration
+# settings.py
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TIMEZONE = 'Asia/Dhaka'  # Set your desired timezone
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+# Celery Beat Settings
+CELERY_BEAT_SCHEDULE = {
+    'archive-audio-requests-daily': {
+        'task': 'bot.tasks.archive_and_delete_audio_requests',
+        'schedule': crontab(hour='16', minute='1'),  # 4 PM daily
+    },
+}
 # REST framework configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
