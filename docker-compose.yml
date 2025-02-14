@@ -44,6 +44,32 @@ services:
     networks:
       - surrat
 
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: .
+    restart: always
+    env_file: .env
+    depends_on:
+      - surrat
+      - postgres
+    command: celery -A system_integration worker -l INFO
+    networks:
+      - surrat
+
+  celery_beat:
+    container_name: celery_beat
+    build:
+      context: .
+    restart: always
+    env_file: .env
+    depends_on:
+      - surrat
+      - postgres
+    command: celery -A system_integration beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    networks:
+      - surrat
+
 volumes:
   postgres-data:
 
