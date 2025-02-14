@@ -89,7 +89,7 @@ class ProcessData:
             return {"error": f"Error during transcription: {str(e)}"}
 
         try:
-            # Translate text to English
+            # Translate text to Norwegian
             translated_text = self.translator.perform_translation(
                 text=transcribed_text, src_lang="sme", tgt_lang="nor"
             )

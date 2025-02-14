@@ -31,5 +31,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
+    def save(self, *args, **kwargs):
+        # ✅ If the user has any permissions, make them staff
+        if self.user_permissions.exists() or self.groups.exists():
+            self.is_staff = True
+        else:
+            self.is_staff = False
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.email

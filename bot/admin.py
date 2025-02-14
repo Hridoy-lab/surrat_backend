@@ -88,5 +88,5 @@ class InstructionAdmin(admin.ModelAdmin):
 
 @admin.register(ArchivedAudioRequest)
 class ArchivedAudioRequestAdmin(admin.ModelAdmin):
-    pass
+    readonly_fields = ("id", "audio", 'response_audio', "transcribed_text", "translated_text", "gpt_response", "translated_response", "created_at")
 

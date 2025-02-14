@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "your-default-secret-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = ['*']
 # ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
-TIME_ZONE = "Asia/Dhaka"
+TIME_ZONE = "Europe/Oslo"
 USE_TZ = True
 
 # Application definition
@@ -158,13 +158,13 @@ CELERY_RESULT_SERIALIZER = 'json'
 # settings.py
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_TIMEZONE = 'Asia/Dhaka'  # Set your desired timezone
+CELERY_TIMEZONE = 'Europe/Oslo'  # Set your desired timezone
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # Celery Beat Settings
 CELERY_BEAT_SCHEDULE = {
     'archive-audio-requests-daily': {
         'task': 'bot.tasks.archive_and_delete_audio_requests',
-        'schedule': crontab(hour='16', minute='1'),  # 4 PM daily
+        'schedule': crontab(hour='4', minute='00'),  # 4 AM daily
     },
 }
 # REST framework configuration
