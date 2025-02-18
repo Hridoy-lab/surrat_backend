@@ -81,11 +81,11 @@ services:
     networks:
       - surrat
     volumes:
-      - redis-vol:/data
+      - redis-data:/data
 
 volumes:
   postgres-data:
-  redis-vol:
+  redis-data:
 networks:
   surrat:
     external: false
