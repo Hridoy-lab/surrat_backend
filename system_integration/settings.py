@@ -156,8 +156,15 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 # Django Celery Beat Configuration
 # settings.py
-CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the broker
+# CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")  # Default to localhost if not found
+REDIS_PORT = os.getenv("REDIS_PORT", "6379")
+REDIS_DB = os.getenv("REDIS_DB", "0")
+
+# Configure Celery
+CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 CELERY_TIMEZONE = 'Europe/Oslo'  # Set your desired timezone
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # Celery Beat Settings
