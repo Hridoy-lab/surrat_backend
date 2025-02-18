@@ -80,6 +80,8 @@ services:
       - "6379:6379"
     networks:
       - surrat
+    volumes:
+      - redis-vol:/data
 
 volumes:
   postgres-data:
