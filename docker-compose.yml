@@ -69,6 +69,12 @@ services:
     command: celery -A system_integration beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
     networks:
       - surrat
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis
+    restart: always
+    volumes:
+        - ./volume/redis:/data
 
 volumes:
   postgres-data:
