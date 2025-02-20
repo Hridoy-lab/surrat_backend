@@ -39,8 +39,8 @@ services:
     volumes:
       - .:/usr/src/app
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
+      - redis
     networks:
       - surrat
 
@@ -53,6 +53,7 @@ services:
     depends_on:
       - surrat
       - postgres
+      - redis
     command: celery -A system_integration worker -l INFO
     networks:
       - surrat
@@ -66,19 +67,25 @@ services:
     depends_on:
       - surrat
       - postgres
+      - redis
     command: celery -A system_integration beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
     networks:
       - surrat
   redis:
-    image: redis:6.2-alpine
-    container_name: redis
+    container_name: redis_surrat
+    image: redis:latest
     restart: always
+    command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
+    networks:
+      - surrat
     volumes:
-        - ./volume/redis:/data
+      - redis-data:/data
 
 volumes:
   postgres-data:
-
+  redis-data:
 networks:
   surrat:
     external: false
