@@ -40,11 +40,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
         super().save(*args, **kwargs)  # Save the user first
 
-        if not is_new:  # Only check permissions after the user has an ID
-            if self.user_permissions.exists() or self.groups.exists():
-                self.is_staff = True
-            else:
-                self.is_staff = False
+        # if not is_new:  # Only check permissions after the user has an ID
+        if self.user_permissions.exists() or self.groups.exists():
+            self.is_staff = True
 
             # Save again to update is_staff if needed
             super().save(update_fields=['is_staff'])
