@@ -32,13 +32,22 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     def save(self, *args, **kwargs):
-        # ✅ If the user has any permissions, make them staff
-        if self.user_permissions.exists() or self.groups.exists():
-            self.is_staff = True
-        else:
-            self.is_staff = False
+        """
+        Ensure that the instance is saved before checking many-to-many fields.
+        """
+        # Check if the instance is new
+        is_new = self._state.adding  # True if the instance is being created
 
-        super().save(*args, **kwargs)
+        super().save(*args, **kwargs)  # Save the user first
+
+        if not is_new:  # Only check permissions after the user has an ID
+            if self.user_permissions.exists() or self.groups.exists():
+                self.is_staff = True
+            else:
+                self.is_staff = False
+
+            # Save again to update is_staff if needed
+            super().save(update_fields=['is_staff'])
 
     def __str__(self):
         return self.email
