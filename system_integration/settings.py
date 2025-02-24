@@ -28,7 +28,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "your-default-secret-key")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = ['*']
 # ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
-TIME_ZONE = "Europe/Oslo"
+# TIME_ZONE = "Europe/Oslo"
+TIME_ZONE = "Asia/Dhaka"
 USE_TZ = True
 
 # Application definition
@@ -165,13 +166,14 @@ REDIS_DB = os.getenv("REDIS_DB", "0")
 # Configure Celery
 CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
 CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-CELERY_TIMEZONE = 'Europe/Oslo'  # Set your desired timezone
+# CELERY_TIMEZONE = 'Europe/Oslo'  # Set your desired timezone
+CELERY_TIMEZONE = 'Asia/Dhaka'  # Set your desired timezone
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # Celery Beat Settings
 CELERY_BEAT_SCHEDULE = {
     'archive-audio-requests-daily': {
         'task': 'bot.tasks.archive_and_delete_audio_requests',
-        'schedule': crontab(hour='4', minute='00'),  # 4 AM daily
+        'schedule': crontab(hour='14', minute='10'),  # 4 AM daily
     },
 }
 # REST framework configuration
