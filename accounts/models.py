@@ -1,8 +1,13 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+from django.utils.timezone import now
+from stripe import client_id
 
 from accounts.managers import CustomUserManager
+from utils.google_drive_refreshtoken import authenticate_google_drive
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
@@ -49,3 +54,38 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class GoogleDriveCredentials(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    client_id = models.CharField(max_length=512, blank=True, null=True)
+    client_secret = models.CharField(max_length=512, blank=True, null=True)
+    refresh_token = models.CharField(max_length=512, blank=True, null=True)
+    access_token = models.CharField(max_length=512, blank=True, null=True)  # Added
+    token_expiry = models.DateTimeField(null=True, blank=True)  # Added
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user',)  # Ensures one credential set per user
+        verbose_name = "Google Drive Credential"
+        verbose_name_plural = "Google Drive Credentials"
+
+    def __str__(self):
+        return f"Credentials for {self.user}"
+
+
+    def save(self, *args, **kwargs):
+        """
+        If credentials are new or client details changed, authenticate and save tokens.
+        """
+        if not self.refresh_token and self.client_id and self.client_secret:
+            creds = authenticate_google_drive(self.client_id, self.client_secret)
+
+            if creds:
+                self.access_token = creds.token
+                self.refresh_token = creds.refresh_token
+                # self.token_expiry = now() + timedelta(seconds=creds.expiry.timestamp() - now().timestamp())
+
+        super().save(*args, **kwargs)
+

@@ -149,7 +149,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Custom user model
 AUTH_USER_MODEL = "accounts.CustomUser"
 
+# GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.file']
+# GOOGLE_DRIVE_CREDENTIALS = os.path.join(BASE_DIR, 'system_integration/client_secrets.json')
+# settings.py
 
+GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 # Celery Configuration
 CELERY_ACCEPT_CONTENT = ['application/json']

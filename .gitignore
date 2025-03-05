@@ -123,3 +123,6 @@ nosetests.xml
 *.py,cover
 
 volume
+client_secret_50.json
+fortoken.py
+fortoken2.py
