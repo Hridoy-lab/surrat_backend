@@ -34,7 +34,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive.file']
 class GoogleDriveCredentialsAdmin(admin.ModelAdmin):
     list_display = ('user', 'client_id', 'refresh_token', 'created_at', 'updated_at')
     fields = ('user', 'client_id', 'client_secret', 'refresh_token', 'access_token', 'token_expiry')
-    readonly_fields = ('refresh_token', 'access_token', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
 
 
     def get_form(self, request, obj=None, **kwargs):

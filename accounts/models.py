@@ -31,6 +31,32 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         default=timezone.timedelta(hours=2)
     )
 
+    # TTS Provider Choices
+    TTS_PROVIDER_CHOICES = (
+        ('acapela', 'Acapela'),
+        ('giellalt', 'GiellaLT'),
+    )
+    tts_provider = models.CharField(
+        max_length=10,
+        choices=TTS_PROVIDER_CHOICES,
+        default='acapela',
+        help_text="Select the TTS provider."
+    )
+
+    # GiellaLT Voice Choices
+    GIELLALT_VOICE_CHOICES = (
+        ('biret', 'Biret (Female)'),
+        ('mahtte', 'Mahtte (Male)'),
+    )
+    giellalt_voice = models.CharField(
+        max_length=10,
+        choices=GIELLALT_VOICE_CHOICES,
+        default='biret',
+        blank=True,
+        null=True,
+        help_text="Select the GiellaLT voice (applies only if GiellaLT is chosen)."
+    )
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
@@ -51,6 +77,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
             # Save again to update is_staff if needed
             super().save(update_fields=['is_staff'])
+
+        # Ensure giellalt_voice is null if tts_provider is not GiellaLT
+        if self.tts_provider != 'giellalt' and self.giellalt_voice is not None:
+            self.giellalt_voice = None
+            super().save(update_fields=['giellalt_voice'])
 
     def __str__(self):
         return self.email
