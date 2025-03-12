@@ -1,0 +1,163 @@
+{#templates/admin/bot/archivedaudiorequest/change_form.html#}
+{#{% extends "admin/change_form.html" %}#}
+{#{% load i18n admin_urls %}#}
+{##}
+{#{% block submit_buttons_bottom %}#}
+{#    <div class="submit-row">#}
+        {# Keep the default Save button #}
+{#        <input type="submit" value="{% translate 'Save' %}" name="_save" class="default">#}
+{##}
+        {# Export to Google Drive button submits the form with a custom action #}
+{#        <input type="submit" value="{% translate 'Export to Google Drive' %}" name="_save_and_export" class="default">#}
+{##}
+        {# Optional: Keep other buttons if needed #}
+{#        <input type="submit" value="{% translate 'Save and add another' %}" name="_addanother">#}
+{#    </div>#}
+{#{% endblock %}#}
+
+
+
+
+
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+
+{% block submit_buttons_bottom %}
+    <div class="submit-row">
+        <input type="submit" value="{% translate 'Save' %}" name="_save" class="default">
+
+        <input type="submit" value="{% translate 'Export to Google Drive' %}" name="_save_and_export" class="default" id="export-button">
+
+        <input type="submit" value="{% translate 'Save and add another' %}" name="_addanother">
+    </div>
+
+    <div id="spinner-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+            <div class="pulse-orbit-spinner">
+                <div class="pulse-core"></div>
+                <div class="orbit-particle particle-1"></div>
+                <div class="orbit-particle particle-2"></div>
+                <div class="orbit-particle particle-3"></div>
+            </div>
+            <div class="spinner-text">Saving and Exporting...</div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+    {{ block.super }}
+    <script type="text/javascript">
+        (function($) {
+            $(document).ready(function() {
+                // Show spinner when "Export to Google Drive" is clicked
+                $('#export-button').on('click', function() {
+                    $('#spinner-overlay').show();
+                });
+
+                // Hide spinner when the page fully loads (after redirect)
+                $(window).on('load', function() {
+                    $('#spinner-overlay').hide();
+                });
+            });
+        })(django.jQuery);
+    </script>
+
+    <style>
+        .pulse-orbit-spinner {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto; /* Center the spinner */
+        }
+
+        .pulse-core {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #00d4ff, #ff00cc);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        .orbit-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+            animation: orbit 2s linear infinite;
+        }
+
+        .particle-1 {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation-delay: 0s;
+            background: #ff6b6b; /* Red */
+        }
+
+        .particle-2 {
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            animation-delay: -0.66s;
+            background: #4ecdc4; /* Cyan */
+        }
+
+        .particle-3 {
+            top: 50%;
+            left: 70px;
+            transform: translateY(-50%);
+            animation-delay: -1.33s;
+            background: #45b7d1; /* Blue */
+        }
+
+        .spinner-text {
+            margin-top: 20px;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.8), 0 0 20px rgba(255, 0, 204, 0.6);
+            animation: text-glow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.3);
+                opacity: 1;
+            }
+        }
+
+        @keyframes orbit {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg) translateX(30px) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg) translateX(30px) rotate(-360deg);
+            }
+        }
+
+        @keyframes text-glow {
+            0% {
+                text-shadow: 0 0 10px rgba(0, 212, 255, 0.8), 0 0 20px rgba(255, 0, 204, 0.6);
+            }
+            100% {
+                text-shadow: 0 0 15px rgba(0, 212, 255, 1), 0 0 25px rgba(255, 0, 204, 0.8);
+            }
+        }
+    </style>
+{% endblock %}
+
+
+
+
+
+

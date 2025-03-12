@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse, path
 from django.contrib import messages
 from .models import GoogleDriveCredentials
-from utils.google_drive import upload_to_drive, get_drive_service, find_folder_by_date, create_folder
+from utils.google_drive import upload_to_drive, get_drive_service, create_folder
 from google_auth_oauthlib.flow import InstalledAppFlow
 import tempfile
 import datetime

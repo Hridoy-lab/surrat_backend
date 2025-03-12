@@ -80,7 +80,7 @@ class MySyncConsumer(SyncConsumer):
 
                 instruction = self.get_instruction(page_number)
                 print("*"*100)
-                print("Thius is instructions: ", instruction.instruction_text)
+                print("This is instructions: ", instruction.instruction_text)
                 processed_data = self.process_audio(data, audio_file_path, instruction)
 
                 if "error" in processed_data:
@@ -92,7 +92,7 @@ class MySyncConsumer(SyncConsumer):
                                                           audio_bytes)
 
                 self.send_initial_response(audio_request, user_audio_duration)
-                flag = self.schedule_response_audio(audio_request, processed_data["translated_response"], user_audio_duration)
+                flag = self.schedule_response_audio(audio_request, processed_data["translated_response"], user_audio_duration, user)
                 # if flag:
                 #     # Increment the request count for this request
                 #     request_counter.request_count += 1
@@ -171,11 +171,11 @@ class MySyncConsumer(SyncConsumer):
         print("First response sent: %s", json.dumps(incomplete_response, indent=4))
         logger.info("First response sent: %s", json.dumps(incomplete_response, indent=4))
 
-    def schedule_response_audio(self, audio_request, translated_response, user_audio_duration):
+    def schedule_response_audio(self, audio_request, translated_response, user_audio_duration, user):
         def send_response_audio():
             time.sleep(10)  # Wait for 10 seconds
             filename = self.generate_audio_filename()
-            self.generate_tts_audio(translated_response, filename)
+            self.generate_tts_audio(translated_response, filename, user)
 
             audio_file_full_path = f'static/audio/{filename}'
             while not os.path.exists(audio_file_full_path):
@@ -191,9 +191,9 @@ class MySyncConsumer(SyncConsumer):
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         return f"Generated_Audio_nor_to_sami_{timestamp}.mp3"
 
-    def generate_tts_audio(self, translated_response, filename):
+    def generate_tts_audio(self, translated_response, filename, user):
         try:
-            tts(translated_response, filename)
+            tts(translated_response, filename, user)
         except Exception as e:
             logger.error("Error during TTS generation: %s", str(e))
             print("Error during TTS generation: %s", str(e))
