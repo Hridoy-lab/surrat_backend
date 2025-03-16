@@ -1,4 +1,4 @@
-name: Development Workflow
+name: Deployment to AWS EC2
 
 on:
   push:
@@ -7,28 +7,41 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Build and Deploy
+        run: |
+          cd /home/ubuntu/www/surrat_backend
+          git checkout development
+          git pull origin development
+          
+          # Ensure the pull was successful
+          if [ $? -ne 0 ]; then
+            echo "Git pull failed! Exiting..."
+            exit 1
+          fi
+          
+          # Build and deploy containers
+          sudo docker-compose up --build -d
 
-      - name: SSH into EC2 and Deploy
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/www/surrat_backend
+          # Run migrations
+          docker-compose exec surrat_backend bash -c "python manage.py makemigrations && python manage.py migrate"
 
+          # Restart celery workers and beat
+          docker-compose restart celery_worker celery_beat
 
-            git reset --hard
-            git pull origin development
-            docker-compose up --build -d
+          # Restart nginx
+          sudo service nginx restart
 
+          # Sleep for 10 seconds
+          sleep 10
 
-            docker-compose exec surrat_backend python manage.py makemigrations
-            docker-compose exec surrat_backend python manage.py migrate
-            docker-compose restart celery_worker celery_beat
+          # Clean up unused Docker images and build cache
+          sudo docker image prune -a -f
+          sudo docker builder prune -f
+
